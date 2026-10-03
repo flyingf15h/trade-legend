@@ -54,6 +54,8 @@ The cupboard's prize is rolled on the server when the turn starts, so refreshing
 
 Every drawing is a placeholder SVG in `static/art/`, listed in `src/lib/art.ts`. Drop the hand-drawn files in `static/art/` and point the matching entry at them. The claw machine's walls, posts, floor and chute are CSS in `ClawMachine.svelte`; the claw and capsules are images.
 
+Some food pictures are borrowed for the prototype: the parfait is by Comfy Tofu (via Pinterest), and the coffee, cream cake and pudding came from image search. Get the artists' permission or swap in the hand-drawn set before a real launch.
+
 ## Database
 
 The schema is in `src/lib/server/db/schema.ts`. After changing it, run `DATABASE_URL=local.db npm run db:generate` to write a migration; it's applied automatically on start.
