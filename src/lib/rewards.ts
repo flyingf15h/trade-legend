@@ -141,7 +141,7 @@ export const ROUND_PRIZES: { weight: number; prize: Prize; label: string }[] = [
 // Shaped capsules always hold the item they look like.
 export const SPECIAL_SHAPES = ['coffee', 'croissant', 'muffin', 'parfait'] as const;
 
-export const CAPSULE_COLOURS = ['pink', 'mint', 'butter', 'sky'] as const;
+export const CAPSULE_COLOURS = ['pink', 'mint', 'butter', 'sky', 'lilac', 'peach'] as const;
 
 export const ICONS: { key: string; label: string }[] = [
 	{ key: 'croissant', label: 'Smiling croissant' },

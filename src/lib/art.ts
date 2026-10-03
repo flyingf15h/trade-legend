@@ -1,22 +1,21 @@
 // Every drawing in the app comes through here. To drop in the hand-drawn versions, put the
 // files in static/art/ and point the matching entry at them (PNG, WebP or SVG all work).
-// The cupboard frame must keep its window at x 28-332, y 96-372 and its prize chute at
-// x 40-140, y 410-486 on a 360 x 548 canvas, since the claw and capsules sit behind those holes.
+// The claw machine's play field (walls, posts, floor, chute) is drawn in CSS in
+// ClawMachine.svelte; the claw and capsules are these images. Capsules come in halves for the
+// opening animation: one clear top shared by all, and a coloured bottom per colour.
 
 const a = (f: string) => `/art/${f}`;
 
 export const ART = {
-	cupboard: a('cupboard.svg'),
-	doily: a('doily.svg'),
 	clawHead: a('claw-head.svg'),
 	clawArm: a('claw-arm.svg'),
-	capsuleBottom: a('capsule-bottom.svg'),
-	capsuleTop: {
-		pink: a('capsule-top-pink.svg'),
-		mint: a('capsule-top-mint.svg'),
-		butter: a('capsule-top-butter.svg'),
-		sky: a('capsule-top-sky.svg')
-	} as Record<string, string>,
+	capsuleTop: a('capsule-top.svg'),
+	capsuleBottom: Object.fromEntries(
+		['pink', 'mint', 'butter', 'sky', 'lilac', 'peach'].map((c) => [c, a(`capsule-bottom-${c}.svg`)])
+	) as Record<string, string>,
+	capsule: Object.fromEntries(
+		['pink', 'mint', 'butter', 'sky', 'lilac', 'peach'].map((c) => [c, a(`capsule-${c}.svg`)])
+	) as Record<string, string>,
 	capsuleSpecial: {
 		coffee: a('capsule-special-coffee.svg'),
 		croissant: a('capsule-special-croissant.svg'),

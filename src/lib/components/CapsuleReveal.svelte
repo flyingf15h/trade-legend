@@ -71,15 +71,15 @@
 				{#if capsule.type === 'special'}
 					<img src={ART.capsuleSpecial[capsule.shape]} alt="" class="whole" />
 				{:else}
-					<img src={ART.capsuleTop[capsule.colour]} alt="" class="half" />
-					<img src={ART.capsuleBottom} alt="" class="half" />
+					<img src={ART.capsuleTop} alt="" class="half" />
+					<img src={ART.capsuleBottom[capsule.colour]} alt="" class="half" />
 				{/if}
 			</button>
 			<p class="hand prompt">{stage === 'closed' ? (special ? 'Ooh, a special one! Tap to open' : 'Tap to open!') : '…'}</p>
 		{:else}
 			{#if capsule.type === 'round'}
-				<img src={ART.capsuleTop[capsule.colour]} alt="" class="fly top" />
-				<img src={ART.capsuleBottom} alt="" class="fly bottom" />
+				<img src={ART.capsuleTop} alt="" class="fly top" />
+				<img src={ART.capsuleBottom[capsule.colour]} alt="" class="fly bottom" />
 			{:else}
 				<img src={ART.capsuleSpecial[capsule.shape]} alt="" class="fly pop" />
 			{/if}

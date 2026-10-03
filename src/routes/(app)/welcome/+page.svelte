@@ -17,7 +17,7 @@
 		<p><b>Crumbs</b> are your loyalty points. Show your card at the counter and you&rsquo;ll get <b>5 Crumbs for every $1</b>.</p>
 		<ul>
 			<li><img src={ART.food.parfait} alt="" /> <span>Vote on next month&rsquo;s flavour for <b>{EARN.vote}</b> Crumbs</span></li>
-			<li><img src={ART.capsuleTop.pink} alt="" /> <span>One free turn a day at the Lucky Cupboard</span></li>
+			<li><img src={ART.capsule.pink} alt="" /> <span>One free turn a day at the Lucky Cupboard</span></li>
 			<li><img src={ART.food.cookie} alt="" /> <span>Trade Crumbs for treats from <b>100</b></span></li>
 			<li><img src={ART.food.cake} alt="" /> <span>Add your birthday for a pastry on Grandma</span></li>
 		</ul>

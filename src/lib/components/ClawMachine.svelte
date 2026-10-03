@@ -2,23 +2,25 @@
 	export type Capsule = { type: 'round'; colour: string } | { type: 'special'; shape: string };
 </script>
 
-
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { ART } from '#lib/art.ts';
 	import { CAPSULE_COLOURS, SPECIAL_SHAPES } from '#lib/rewards.ts';
 
-	// Umamusume-style crane: a side view and a single button. Hold it to slide the claw across,
-	// let go to drop. The claw gets a little quicker with every turn you take in a day.
-	// Where you let go is just for fun: the claw always comes back with the capsule the server picked.
+	// Umamusume-style crane. The machine is much wider than the screen: hold the one button and
+	// the claw slides right while the view scrolls along with it; let go and it drops. It then
+	// carries the capsule back to the prize chute at the start. The claw gets a little quicker
+	// with every turn in a day. Where it lands is just for fun: it always comes back with the
+	// capsule the server already picked.
 
-	// All positions are in the cupboard drawing's own units (360 wide, 548 tall), so the whole
-	// machine scales with its container. Window: x 28-332, y 96-372. Chute: x 40-140, y 410-486.
-	const REST_Y = 102;
-	const X_MIN = 70;
-	const X_MAX = 306;
-	const CHUTE_X = 90;
-	const SIZE = 44;
+	// Field units: the play field is FIELD_W wide and 300 tall, scaled to the window's height.
+	const FIELD_W = 1100;
+	const REST_Y = 24;
+	const START_X = 62; // above the chute
+	const X_MAX = 1060;
+	const SIZE = 36;
+	const GRAB = 52; // capsule centre sits this far below the top of the claw head
+	const POSTS = [240, 500, 760, 1020];
 
 	let {
 		canPlay,
@@ -31,43 +33,44 @@
 		label: string;
 		// how many turns were already taken today; each one speeds the claw up
 		turn?: number;
-		// asks the server for the result; returns the capsule the claw should come back with
-		start: () => Promise<Capsule | null>;
+		// asks the server for the result; returns the capsule the claw should come back with, or
+		// an error message
+		start: () => Promise<Capsule | string>;
 		ondone: (capsule: Capsule) => void;
 	} = $props();
 
-	type Phase = 'idle' | 'starting' | 'aim' | 'busy' | 'tray';
+	type Phase = 'idle' | 'starting' | 'aim' | 'busy';
+	let open = $state(false);
 	let phase = $state<Phase>('idle');
-	let x = $state(X_MIN);
+	let problem = $state<string | null>(null);
+	let x = $state(START_X);
 	let y = $state(REST_Y);
-	let arm = $state(12); // degrees each arm is opened
+	let arm = $state(10); // degrees each arm is opened
 	let held = $state<Capsule | null>(null);
 	let falling = $state<{ cap: Capsule; y: number } | null>(null);
-	let tray = $state<Capsule | null>(null);
-	let speed = 90;
+	let speed = 160;
 
-	// ---- the heap of capsules, seen from the side ----
-	let seed = 11;
+	// ---- the long heap of capsules along the floor ----
+	let seed = 21;
 	const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 	type Piled = { id: number; x: number; y: number; rot: number; cap: Capsule };
-	// each layer sits a little higher and narrower, like a mound
 	const layers = [
-		{ y: 348, from: 52, to: 312 },
-		{ y: 316, from: 72, to: 292 },
-		{ y: 286, from: 100, to: 262 },
-		{ y: 258, from: 140, to: 220 }
+		{ y: 262, gap: 0 },
+		{ y: 236, gap: 0.25 },
+		{ y: 212, gap: 0.6 }
 	];
 	const heap: Piled[] = [];
 	let n = 0;
 	for (const [li, l] of layers.entries()) {
-		for (let px = l.from + (li % 2) * 18 + rand() * 6; px <= l.to; px += SIZE - 4 + rand() * 8) {
+		for (let px = 136 + li * 16; px < 1084; px += SIZE + 2 + rand() * 6) {
+			if (rand() < l.gap) continue;
 			heap.push({
 				id: n,
 				x: px,
-				y: l.y + (rand() - 0.5) * 8,
-				rot: (rand() - 0.5) * 60,
+				y: l.y + (rand() - 0.5) * 6,
+				rot: (rand() - 0.5) * 40,
 				cap:
-					n % 9 === 5
+					n % 9 === 4
 						? { type: 'special', shape: SPECIAL_SHAPES[n % SPECIAL_SHAPES.length] }
 						: { type: 'round', colour: CAPSULE_COLOURS[Math.floor(rand() * CAPSULE_COLOURS.length)] }
 			});
@@ -76,12 +79,20 @@
 	}
 	let pile = $state(heap);
 
+	// ---- the window and its camera ----
+	let viewW = $state(360);
+	let viewH = $state(300);
+	let u = $derived(viewH / 300); // px per field unit
+	let camMax = $derived(Math.max(0, FIELD_W - viewW / u));
+	let cam = $derived(Math.min(camMax, Math.max(0, x - (viewW / u) * 0.42)));
+
 	// ---- animation helpers ----
 	let raf = 0;
 	let alive = true;
 	onDestroy(() => {
 		alive = false;
 		if (raf) cancelAnimationFrame(raf);
+		if (typeof document !== 'undefined') document.body.style.overflow = '';
 	});
 
 	const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
@@ -128,73 +139,79 @@
 
 	let result: Capsule | null = null;
 
+	function setOpen(v: boolean) {
+		open = v;
+		document.body.style.overflow = v ? 'hidden' : '';
+	}
+
+	// opens the machine fullscreen and starts a turn
 	export async function begin() {
-		if (phase !== 'idle' || !canPlay) return;
+		if (phase !== 'idle') return;
+		setOpen(true);
+		if (!canPlay) {
+			problem = 'You need a few more Crumbs for another turn. Come back tomorrow for a free one!';
+			return;
+		}
+		problem = null;
 		phase = 'starting';
-		tray = null;
 		// read before start(), which refreshes the page data and bumps the turn count
-		speed = 90 * (1 + 0.3 * Math.min(turn, 4));
-		result = await start();
-		if (!result) {
+		speed = 160 * (1 + 0.3 * Math.min(turn, 4));
+		const r = await start();
+		if (typeof r === 'string') {
+			problem = r;
 			phase = 'idle';
 			return;
 		}
+		result = r;
 		phase = 'aim';
+	}
+
+	function close() {
+		if (phase !== 'idle') return;
+		problem = null;
+		setOpen(false);
 	}
 
 	// the capsule under the claw: the highest one close by, or failing that the nearest
 	function target() {
-		const near = pile.filter((p) => Math.abs(p.x - x) < 26);
-		const pool = near.length ? near : pile;
-		return pool.reduce((a, b) => {
-			const sa = near.length ? a.y : Math.abs(a.x - x);
-			const sb = near.length ? b.y : Math.abs(b.x - x);
-			return sb < sa ? b : a;
-		});
+		const near = pile.filter((p) => Math.abs(p.x - x) < 22);
+		if (near.length) return near.reduce((a, b) => (b.y < a.y ? b : a));
+		return pile.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
 	}
 
 	async function drop() {
 		phase = 'busy';
 		const best = target();
 		const fromX = x;
-		await animate(240, (t) => {
-			arm = 12 + 22 * t;
+		await animate(260, (t) => {
+			arm = 10 + 22 * t;
 			x = fromX + (best.x - fromX) * t;
 		});
-		const targetY = best.y - 66;
-		await animate(900, (t) => (y = REST_Y + (targetY - REST_Y) * t));
-		await wait(150);
-		await animate(320, (t) => (arm = 34 - 30 * t));
+		const targetY = best.y - GRAB;
+		await animate(850, (t) => (y = REST_Y + (targetY - REST_Y) * t));
+		await wait(140);
+		await animate(300, (t) => (arm = 32 - 28 * t));
 		pile = pile.filter((p) => p.id !== best.id);
 		held = result!;
-		await wait(200);
-		await animate(950, (t) => (y = targetY + (REST_Y - targetY) * t));
-		await wait(200);
+		await wait(180);
+		await animate(850, (t) => (y = targetY + (REST_Y - targetY) * t));
+		await wait(160);
+		// back along the machine to the chute, the view scrolling with it
 		const cx = x;
-		await animate(1000, (t) => (x = cx + (CHUTE_X - cx) * t));
-		await wait(250);
-		// let go over the chute
-		const dropFrom = REST_Y + 66;
+		const back = Math.min(2600, 500 + (cx - START_X) * 2.2);
+		await animate(back, (t) => (x = cx + (START_X - cx) * t));
+		await wait(220);
 		const cap = held;
-		falling = { cap, y: dropFrom };
+		const from = REST_Y + GRAB;
+		falling = { cap, y: from };
 		held = null;
-		animate(200, (t) => (arm = 4 + 26 * t));
-		await animate(520, (t) => (falling = { cap, y: dropFrom + (440 - dropFrom) * t * t }));
-		tray = cap;
+		animate(200, (t) => (arm = 4 + 24 * t));
+		await animate(480, (t) => (falling = { cap, y: from + (300 - from) * t * t }));
 		falling = null;
-		phase = 'tray';
-		await animate(300, (t) => (arm = 30 - 18 * t));
+		await animate(260, (t) => (arm = 28 - 18 * t));
 		// tip a fresh capsule back onto the heap for next time
 		pile = [...pile, { ...best, id: n++ }];
-	}
-
-	function openTray() {
-		if (phase !== 'tray' || !tray) return;
-		const cap = tray;
-		tray = null;
 		phase = 'idle';
-		x = X_MIN;
-		y = REST_Y;
 		ondone(cap);
 	}
 
@@ -205,17 +222,16 @@
 		if (!down) release();
 	}
 
-	const u = (v: number) => `calc(${v} * 100cqw / 360)`;
+	const f = (v: number) => `calc(${v} * var(--u))`;
 </script>
+
+<svelte:window onkeydown={(e) => open && e.key === 'Escape' && close()} />
 
 {#snippet capsule(cap: Capsule, size: number)}
 	{#if cap.type === 'special'}
-		<img src={ART.capsuleSpecial[cap.shape]} alt="" style="width:{u(size * 1.12)}" />
+		<img src={ART.capsuleSpecial[cap.shape]} alt="" style="width:{f(size * 1.15)}" />
 	{:else}
-		<span class="round" style="width:{u(size)}">
-			<img src={ART.capsuleTop[cap.colour]} alt="" />
-			<img src={ART.capsuleBottom} alt="" />
-		</span>
+		<img src={ART.capsule[cap.colour] ?? ART.capsule.pink} alt="" style="width:{f(size)}" />
 	{/if}
 {/snippet}
 
@@ -224,173 +240,341 @@
 	<img src={ART.sparkle} alt="" class="twinkle b" />
 {/snippet}
 
-<div class="machine-wrap">
-	<img src={ART.doily} alt="" class="doily" />
-	<div class="machine" aria-label="Grandma's Lucky Cupboard claw machine" role="group">
-		<div class="window"></div>
+<div class="machine" class:open>
+	{#if open}
+		<div class="topbar">
+			<button class="close" onclick={close} disabled={phase !== 'idle'} aria-label="Close the claw machine">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+			</button>
+		</div>
+	{/if}
 
-		{#each pile as p (p.id)}
-			<div
-				class="piled"
-				style="left:{u(p.x)}; top:{u(p.y)}; z-index:{Math.round(400 - p.y) + 2}; transform: translate(-50%,-50%) rotate({p.rot}deg)"
-			>
-				{@render capsule(p.cap, SIZE)}
-				{#if p.cap.type === 'special'}{@render sparkles()}{/if}
+	<div class="frame">
+		{#if open}
+			<div class="marquee">
+				<span class="bulbs" aria-hidden="true"></span>
+				<span class="name">Grandma&rsquo;s Lucky Cupboard</span>
 			</div>
-		{/each}
+		{/if}
+		<div
+			class="window"
+			bind:clientWidth={viewW}
+			bind:clientHeight={viewH}
+			style="--u:{u}px"
+			role="group"
+			aria-label="Claw machine"
+		>
+			<div class="field" style="width:{f(FIELD_W)}; transform: translateX(calc({-cam} * var(--u)))">
+				<div class="ceiling"></div>
+				<div class="rail"></div>
+				{#each POSTS as px (px)}
+					<div class="post" style="left:{f(px)}"></div>
+				{/each}
+				<p class="sign" style="left:{f(18)}; top:{f(118)}; font-size:{f(17)}">prizes &darr;</p>
+				<div class="floor"></div>
+				<div class="chute" style="left:{f(22)}; width:{f(80)}"></div>
 
-		<!-- the claw -->
-		<div class="cable" style="left:{u(x)}; top:{u(96)}; height:{u(y - 96 + 6)}"></div>
-		<div class="claw" style="left:{u(x)}; top:{u(y)}">
-			<img src={ART.clawArm} alt="" class="arm left" style="width:{u(20)}; left:{u(-24)}; top:{u(30)}; transform: rotate({arm}deg)" />
-			<img src={ART.clawArm} alt="" class="arm right" style="width:{u(20)}; left:{u(4)}; top:{u(30)}; transform: scaleX(-1) rotate({arm}deg)" />
-			{#if held}
-				<div class="held" class:shiny={held.type === 'special'} style="top:{u(66)}">
-					{@render capsule(held, SIZE)}
-					{#if held.type === 'special'}{@render sparkles()}{/if}
+				{#each pile as p (p.id)}
+					<div
+						class="piled"
+						style="left:{f(p.x)}; top:{f(p.y)}; z-index:{Math.round(300 - p.y)}; transform: translate(-50%,-50%) rotate({p.rot}deg)"
+					>
+						{@render capsule(p.cap, SIZE)}
+						{#if p.cap.type === 'special'}{@render sparkles()}{/if}
+					</div>
+				{/each}
+
+				<div class="cable" style="left:{f(x)}; top:{f(18)}; height:{f(y - 18 + 4)}"></div>
+				<div class="claw" style="left:{f(x)}; top:{f(y)}">
+					<img src={ART.clawArm} alt="" class="arm left" style="width:{f(15)}; left:{f(-19)}; top:{f(20)}; transform: rotate({arm}deg)" />
+					<img src={ART.clawArm} alt="" class="arm right" style="width:{f(15)}; left:{f(4)}; top:{f(20)}; transform: scaleX(-1) rotate({arm}deg)" />
+					{#if held}
+						<div class="held" class:shiny={held.type === 'special'} style="top:{f(GRAB)}">
+							{@render capsule(held, SIZE)}
+						</div>
+					{/if}
+					<img src={ART.clawHead} alt="" class="head" style="width:{f(40)}" />
 				</div>
-			{/if}
-			<img src={ART.clawHead} alt="" class="head" style="width:{u(56)}" />
+
+				{#if falling}
+					<div class="piled" style="left:{f(START_X)}; top:{f(falling.y)}; z-index:5; transform: translate(-50%,-50%)">
+						{@render capsule(falling.cap, SIZE)}
+					</div>
+				{/if}
+				<div class="floor-front" style="width:{f(FIELD_W)}"></div>
+			</div>
+			<div class="glass"></div>
 		</div>
 
-		{#if falling}
-			<div class="piled" style="left:{u(CHUTE_X)}; top:{u(falling.y)}; z-index:160; transform: translate(-50%,-50%)">
-				{@render capsule(falling.cap, SIZE)}
-			</div>
-		{/if}
-
-		<div class="glass"></div>
-		<img src={ART.cupboard} alt="" class="frame" />
-
-		{#if tray}
-			<button class="tray" class:shiny={tray.type === 'special'} style="left:{u(CHUTE_X)}; top:{u(452)}" onclick={openTray}>
-				{@render capsule(tray, 50)}
-				<span class="sr-only">Open your capsule</span>
-			</button>
-		{/if}
+		<div class="panel">
+			{#if phase === 'aim' || phase === 'busy'}
+				<button
+					class="hold"
+					class:live={phase === 'aim'}
+					disabled={phase !== 'aim'}
+					onpointerdown={(e) => {
+						(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+						press();
+					}}
+					onpointerup={release}
+					onpointercancel={release}
+					onkeydown={(e) => key(e, true)}
+					onkeyup={(e) => key(e, false)}
+					oncontextmenu={(e) => e.preventDefault()}
+				>
+					<b>HOLD</b>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
+					<span class="sr-only">Hold to move the claw, let go to drop it</span>
+				</button>
+				<p class="hint">
+					{#if phase === 'aim'}Hold to slide the claw along. Let go to drop!{#if turn > 0}<br /><small>The claw&rsquo;s a little quicker now&hellip;</small>{/if}
+					{:else}Here it comes&hellip;{/if}
+				</p>
+			{:else}
+				<button class="btn play" onclick={begin} disabled={phase === 'starting'}>
+					{phase === 'starting' ? 'Opening the cupboard…' : label}
+				</button>
+				{#if problem}<p class="problem" role="alert">{problem}</p>{/if}
+			{/if}
+		</div>
 	</div>
 </div>
 
-<div class="controls">
-	{#if phase === 'idle' || phase === 'starting'}
-		<button class="btn butter big" onclick={begin} disabled={!canPlay || phase === 'starting'}>
-			{phase === 'starting' ? 'Opening the cupboard…' : label}
-		</button>
-	{:else if phase === 'tray'}
-		<p class="hand tap">Your capsule rolled out! Tap it to open.</p>
-	{:else}
-		<button
-			class="mbtn"
-			class:live={phase === 'aim'}
-			disabled={phase !== 'aim'}
-			onpointerdown={(e) => {
-				(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-				press();
-			}}
-			onpointerup={release}
-			onpointercancel={release}
-			onkeydown={(e) => key(e, true)}
-			onkeyup={(e) => key(e, false)}
-			oncontextmenu={(e) => e.preventDefault()}
-		>
-			<b>HOLD</b>
-			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
-			<span class="sr-only">Hold to move the claw, let go to drop it</span>
-		</button>
-		<p class="hint">
-			{#if phase === 'aim'}Hold the button to slide the claw across. Let go to drop!
-				{#if turn > 0}<br /><small class="muted">The claw&rsquo;s a little quicker now&hellip;</small>{/if}
-			{:else}Here it comes&hellip;{/if}
-		</p>
-	{/if}
-</div>
-
 <style>
-	.machine-wrap {
-		position: relative;
-		isolation: isolate;
-		/* leave room for the header, the buttons and the tab bar so nothing scrolls mid-play */
-		width: min(100%, 380px, calc((100svh - 470px) * 360 / 548));
-		min-width: 230px;
-		margin: 0 auto;
-		padding-top: 10px;
-	}
-	.doily {
-		position: absolute;
-		top: 0;
-		left: 50%;
-		width: 62%;
-		transform: translateX(-50%);
-		z-index: 2;
-		pointer-events: none;
-	}
-	.machine img {
-		max-width: none;
-	}
+	/* ---------- inline preview vs fullscreen ---------- */
 	.machine {
+		--brown: #5a3a2e;
+		--wall: #ffd6dc;
+		--yellow: #f8c94f;
+		--orange: #f2a64a;
+	}
+	.machine:not(.open) .window {
+		height: 250px;
+	}
+	.machine:not(.open) .panel {
+		background: none;
+		border: 0;
+		padding: 18px 0 0;
+		box-shadow: none;
+		min-height: 0;
+	}
+	.machine.open {
+		position: fixed;
+		inset: 0;
+		z-index: 60;
+		display: flex;
+		flex-direction: column;
+		background: #f7b9c2;
+		padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+		animation: zoom 0.25s ease-out;
+	}
+	@keyframes zoom {
+		from {
+			transform: scale(0.94);
+			opacity: 0;
+		}
+	}
+	.machine.open .frame {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
+		padding: 0 12px 12px;
+	}
+	.machine.open .frame {
+		justify-content: center;
+	}
+	.machine.open .window {
+		flex: 1;
+		min-height: 0;
+		/* keep it a wide, long window rather than a tall empty one */
+		max-height: min(118vw, 560px);
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+	}
+	.marquee {
 		position: relative;
-		/* keep the machine's layers from poking through the prize overlay */
-		isolation: isolate;
-		container-type: inline-size;
-		aspect-ratio: 360 / 548;
+		background: #f59aa8;
+		border: 4px solid var(--brown);
+		border-bottom: 0;
+		border-radius: 22px 22px 0 0;
+		padding: 18px 12px 14px;
+		text-align: center;
+	}
+	.bulbs {
+		position: absolute;
+		left: 14px;
+		right: 14px;
+		top: 6px;
+		height: 8px;
+		background: radial-gradient(circle, #fff6c2 3px, transparent 3.5px) 0 0 / 18px 8px repeat-x;
+		animation: blink 1s steps(2) infinite;
+	}
+	@keyframes blink {
+		50% {
+			background-position: 9px 0;
+		}
+	}
+	.topbar {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 10px 12px;
+	}
+	.close {
+		width: 44px;
+		height: 44px;
+		border: 0;
+		background: none;
+		color: var(--brown);
+		cursor: pointer;
+		flex: none;
+	}
+	.close:disabled {
+		opacity: 0.25;
+	}
+	.close svg {
+		width: 28px;
+		height: 28px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.6;
+		stroke-linecap: round;
+	}
+	.name {
+		font: 400 1.7rem var(--display);
+		color: #fff;
+		-webkit-text-stroke: 1.5px var(--brown);
+		paint-order: stroke fill;
+		text-shadow: 0 3px 0 var(--brown);
+	}
+
+	/* ---------- the window and play field ---------- */
+	.window {
+		position: relative;
+		overflow: hidden;
+		border: 4px solid var(--brown);
+		border-radius: 22px;
+		background: var(--wall);
+		box-shadow:
+			inset 0 0 0 6px var(--yellow),
+			inset 0 0 0 9px var(--brown);
 		user-select: none;
 		-webkit-user-select: none;
 		touch-action: none;
 	}
-	.window {
-		position: absolute;
-		left: calc(28 * 100cqw / 360);
-		top: calc(96 * 100cqw / 360);
-		width: calc(304 * 100cqw / 360);
-		height: calc(276 * 100cqw / 360);
-		background:
-			linear-gradient(transparent 70%, rgba(201, 138, 74, 0.35)),
-			repeating-linear-gradient(90deg, #fbeee0 0 18px, #f8e6d4 18px 36px);
+	.window img {
+		max-width: none;
 	}
-	.window,
-	.piled,
-	.claw,
-	.cable {
-		pointer-events: none;
+	.field {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		will-change: transform;
+		/* pink wall with a soft star print, darker toward the floor like the reference */
+		background:
+			radial-gradient(circle at 25% 30%, rgba(255, 255, 255, 0.7) 1.2px, transparent 2px) 0 0 / 26px 26px,
+			radial-gradient(circle at 70% 75%, rgba(255, 255, 255, 0.5) 1px, transparent 1.8px) 0 0 / 34px 34px,
+			linear-gradient(#ffe3e7, #f9b6c2);
+	}
+	.ceiling {
+		position: absolute;
+		inset: 0 0 auto 0;
+		height: calc(14 * var(--u));
+		background: #f59aa8;
+		border-bottom: 3px solid var(--brown);
+	}
+	.rail {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: calc(14 * var(--u));
+		height: calc(6 * var(--u));
+		background: #e9d9cf;
+		border-bottom: 2px solid var(--brown);
+	}
+	.post {
+		position: absolute;
+		top: calc(20 * var(--u));
+		bottom: calc(30 * var(--u));
+		width: calc(16 * var(--u));
+		margin-left: calc(-8 * var(--u));
+		background: linear-gradient(90deg, var(--yellow) 0 55%, var(--orange) 55%);
+		border: 3px solid var(--brown);
+		border-top: 0;
+	}
+	.sign {
+		position: absolute;
+		margin: 0;
+		font-family: var(--hand);
+		font-weight: 700;
+		color: var(--brown);
+		white-space: nowrap;
+	}
+	.floor {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: calc(32 * var(--u));
+		background: #fbc6ce;
+		border-top: 3px solid var(--brown);
+	}
+	.chute {
+		position: absolute;
+		bottom: 0;
+		height: calc(34 * var(--u));
+		background: #7a4b3c;
+		border: 3px solid var(--brown);
+		border-bottom: 0;
+		border-radius: 10px 10px 0 0;
+		box-shadow: inset 0 0 0 4px var(--yellow);
+		z-index: 4;
+	}
+	.floor-front {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		height: calc(8 * var(--u));
+		background: #f59aa8;
+		border-top: 3px solid var(--brown);
+		z-index: 6;
 	}
 	.piled {
 		position: absolute;
 		line-height: 0;
+		pointer-events: none;
 	}
-	.round {
-		display: inline-flex;
-		flex-direction: column;
-	}
-	.round img {
+	.piled img,
+	.held img {
 		display: block;
-		width: 100%;
 	}
 	.cable {
 		position: absolute;
-		z-index: 170;
-		width: 3px;
-		margin-left: -1.5px;
-		background: #9b8a80;
+		width: 4px;
+		margin-left: -2px;
+		background: repeating-linear-gradient(#9c8579 0 5px, #c9b4aa 5px 9px);
+		z-index: 400;
 	}
 	.claw {
 		position: absolute;
-		z-index: 171;
 		width: 0;
 		height: 0;
+		z-index: 401;
 	}
 	.claw .head {
 		position: absolute;
 		left: 0;
 		top: 0;
 		transform: translateX(-50%);
-		filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.15));
 	}
 	.claw .arm {
 		position: absolute;
-		transform-origin: 70% 4%;
+		transform-origin: 70% 6%;
 	}
 	.claw .arm.right {
-		transform-origin: 30% 4%;
+		transform-origin: 30% 6%;
 	}
 	.held {
 		position: absolute;
@@ -403,133 +587,15 @@
 	}
 	.glass {
 		position: absolute;
-		left: calc(28 * 100cqw / 360);
-		top: calc(96 * 100cqw / 360);
-		width: calc(304 * 100cqw / 360);
-		height: calc(276 * 100cqw / 360);
-		z-index: 200;
-		pointer-events: none;
-		background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, 0.35) 22%, rgba(255, 255, 255, 0.12) 30%, transparent 32%, transparent 60%, rgba(255, 255, 255, 0.25) 62%, transparent 66%);
-	}
-	.frame {
-		position: absolute;
 		inset: 0;
-		width: 100%;
-		z-index: 201;
 		pointer-events: none;
-	}
-	.tray {
-		all: unset;
-		position: absolute;
-		z-index: 202;
-		transform: translate(-50%, -50%);
-		cursor: pointer;
-		line-height: 0;
-		animation: bounce 0.9s ease-out, nudge 1.4s 1s ease-in-out infinite;
-	}
-	.tray:focus-visible {
-		outline: 3px solid var(--butter);
-		border-radius: 50%;
-	}
-	@keyframes bounce {
-		0% {
-			transform: translate(-50%, -90%);
-		}
-		40% {
-			transform: translate(-50%, -50%);
-		}
-		60% {
-			transform: translate(-50%, -62%);
-		}
-		80% {
-			transform: translate(-50%, -50%);
-		}
-	}
-	@keyframes nudge {
-		0%,
-		100% {
-			transform: translate(-50%, -50%) rotate(0);
-		}
-		25% {
-			transform: translate(-50%, -50%) rotate(-8deg);
-		}
-		75% {
-			transform: translate(-50%, -50%) rotate(8deg);
-		}
-	}
-	.controls {
-		max-width: 380px;
-		margin: 10px auto 0;
-		text-align: center;
-	}
-	.big {
-		font-size: 1.2rem;
-		padding: 14px 40px;
-	}
-	.tap {
-		font-size: 1.6rem;
-		margin: 6px 0;
-		color: var(--maroon);
-	}
-	.mbtn {
-		width: 100px;
-		height: 100px;
-		margin: 0 auto;
-		border-radius: 50%;
-		border: 3px solid var(--maroon-dk);
-		background: var(--line);
-		color: var(--muted);
-		box-shadow: 0 6px 0 var(--maroon-dk);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		touch-action: none;
-		user-select: none;
-		-webkit-user-select: none;
-		-webkit-touch-callout: none;
-		transition: transform 0.06s, box-shadow 0.06s;
-	}
-	.mbtn b {
-		font: 700 1.1rem var(--display);
-		letter-spacing: 0.06em;
-		line-height: 1;
-	}
-	.mbtn svg {
-		width: 30px;
-		height: 30px;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 3;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-	.mbtn.live {
-		background: var(--pink);
-		color: var(--maroon-dk);
-		animation: pulse 1.2s ease-in-out infinite;
-	}
-	.mbtn.live:active {
-		transform: translateY(5px);
-		box-shadow: 0 1px 0 var(--maroon-dk);
-		animation: none;
-	}
-	.mbtn:disabled {
-		cursor: default;
-		opacity: 0.7;
-	}
-	@keyframes pulse {
-		50% {
-			box-shadow:
-				0 6px 0 var(--maroon-dk),
-				0 0 0 8px rgba(244, 167, 176, 0.35);
-		}
+		z-index: 10;
+		background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.28) 32%, rgba(255, 255, 255, 0.1) 38%, transparent 40%);
 	}
 	/* treat-shaped capsules glint gold, like the special plushies */
 	.twinkle {
 		position: absolute;
-		width: 14px;
+		width: 12px;
 		pointer-events: none;
 		animation: twinkle 1.6s ease-in-out infinite;
 	}
@@ -540,7 +606,7 @@
 	.twinkle.b {
 		bottom: 2px;
 		left: -6px;
-		width: 10px;
+		width: 9px;
 		animation-delay: 0.8s;
 	}
 	@keyframes twinkle {
@@ -554,8 +620,89 @@
 			opacity: 1;
 		}
 	}
+
+	/* ---------- control panel ---------- */
+	.panel {
+		margin-top: 12px;
+		padding: 16px 16px 14px;
+		background: var(--yellow);
+		border: 4px solid var(--brown);
+		border-radius: 22px;
+		box-shadow: inset 0 -8px 0 var(--orange);
+		text-align: center;
+		min-height: 150px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+	}
+	.play {
+		width: 100%;
+		max-width: 380px;
+		font-size: 1.6rem;
+		padding: 18px;
+	}
+	.problem {
+		margin: 10px 0 0;
+		font-weight: 700;
+		color: var(--maroon-dk);
+	}
+	.hold {
+		width: 104px;
+		height: 104px;
+		border-radius: 50%;
+		border: 4px solid var(--brown);
+		background: #f6c3cf;
+		color: var(--brown);
+		box-shadow: 0 7px 0 var(--brown);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		touch-action: none;
+		user-select: none;
+		-webkit-user-select: none;
+		-webkit-touch-callout: none;
+		transition: transform 0.06s, box-shadow 0.06s;
+	}
+	.hold b {
+		font: 400 1.4rem var(--display);
+		line-height: 1;
+	}
+	.hold svg {
+		width: 30px;
+		height: 30px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 3;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.hold.live {
+		background: #ff9fb0;
+		animation: pulse 1.2s ease-in-out infinite;
+	}
+	.hold.live:active {
+		transform: translateY(6px);
+		box-shadow: 0 1px 0 var(--brown);
+		animation: none;
+	}
+	.hold:disabled {
+		cursor: default;
+		opacity: 0.75;
+	}
+	@keyframes pulse {
+		50% {
+			box-shadow:
+				0 7px 0 var(--brown),
+				0 0 0 9px rgba(255, 255, 255, 0.45);
+		}
+	}
 	.hint {
-		margin-top: 14px;
-		min-height: 3em;
+		margin: 12px 0 0;
+		font-weight: 700;
+		color: var(--brown);
+		min-height: 2.6em;
 	}
 </style>

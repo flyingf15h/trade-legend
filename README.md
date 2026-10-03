@@ -33,7 +33,7 @@ ORIGIN=https://your-domain.example ./start.sh
 | The Treat Shelf | Trade Crumbs for a voucher, with terms and expiry shown before confirming |
 | My Recipe Book | Vouchers with scannable codes, and a receipt-style Crumb history |
 | The Tasting Table | Vote once per round (1st to 20th) for next month's flavour, the recipe archive, notes on the fridge |
-| Lucky Cupboard | Umamusume-style claw machine: hold the button to slide the claw, let go to drop. It always grabs a capsule. One free turn a day, then 10 Crumbs, and the claw gets quicker each turn |
+| Lucky Cupboard | Umamusume-style claw machine that goes fullscreen when you press Play. The machine is much wider than the screen: hold the button and the view scrolls along with the claw, let go to drop, and it carries the capsule back to the prize chute. It always grabs a capsule. One free turn a day, then 10 Crumbs, and the claw gets quicker each turn |
 | Invite a Neighbour | Personal link and QR, referral progress (invited, joined, first visit done) |
 | Profile | Name, email, friend, birthday (for a birthday-week pastry), review link |
 
@@ -46,13 +46,13 @@ All the numbers live in `src/lib/rewards.ts`:
 - $1 = 5 Crumbs, on the amount paid after discounts, before tax and tip. Fractions are kept, so $7.35 earns 36.75
 - Voting 100, review 250, referral 150 for the referrer and 50 for the friend after a first purchase of $5 or more (up to 5 a month)
 - Treat Shelf: free drink or 10% off (100), 15% off (120), free cookie (150), BOGO (200), free pastry (250)
-- Cupboard: 1 in 10 capsules is shaped like a bakery item and holds that item for free. The rest hold 10/15/20/50 Crumbs, a free sample, double Crumbs on the next purchase, or 10/12/15% off. The odds are shown in the app
+- Cupboard: 1 in 10 capsules is shaped like a bakery item and holds that item for free. The rest hold 10/15/20/50 Crumbs, a free sample, double Crumbs on the next purchase, or 10/12/15% off.
 
 The cupboard's prize is rolled on the server when the turn starts, so refreshing mid-animation can't reroll it.
 
 ## Swapping in the hand-drawn art
 
-Every drawing is a placeholder SVG in `static/art/`, listed in `src/lib/art.ts`. Drop the hand-drawn files in `static/art/` and point the matching entry at them. The cupboard frame needs to keep its window and prize chute in the same place (the coordinates are noted in `art.ts`), since the claw and capsules sit behind those holes.
+Every drawing is a placeholder SVG in `static/art/`, listed in `src/lib/art.ts`. Drop the hand-drawn files in `static/art/` and point the matching entry at them. The claw machine's walls, posts, floor and chute are CSS in `ClawMachine.svelte`; the claw and capsules are images.
 
 ## Database
 

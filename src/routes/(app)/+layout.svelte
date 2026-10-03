@@ -50,11 +50,6 @@
 			<img src={ART.food.cookie} alt="" />
 			<b>{data.balance}</b>
 		</a>
-		{#if here.tab !== 'home' && here.tab !== 'me'}
-			<a href="/me" class="me" aria-label="Me">
-				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" /><path d="M5 19c1-3.5 3.8-5 7-5s6 1.5 7 5" /></svg>
-			</a>
-		{/if}
 	</div>
 </header>
 
@@ -112,8 +107,7 @@
 		color: var(--ink);
 		flex: none;
 	}
-	.back svg,
-	.me svg {
+	.back svg {
 		width: 24px;
 		height: 24px;
 		fill: none;
@@ -159,16 +153,6 @@
 	.crumbs img {
 		width: 20px;
 		height: 20px;
-	}
-	.me {
-		width: 42px;
-		height: 42px;
-		border-radius: 50%;
-		background: var(--maroon);
-		color: #fff;
-		display: grid;
-		place-items: center;
-		flex: none;
 	}
 	main {
 		max-width: var(--col);
