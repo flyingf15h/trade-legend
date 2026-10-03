@@ -6,18 +6,18 @@
 	let { data }: PageProps = $props();
 
 	let rows = $derived([
-		{ href: '/recipe-book', label: 'My Rewards', icon: 'ticket', tint: 'pink', note: data.ready ? `${data.ready} ready` : '' },
-		{ href: '/recipe-book?tab=history', label: 'Crumb History', icon: 'receipt', tint: 'butter', note: '' },
-		{ href: '/invite', label: 'Refer a Friend', icon: 'heart', tint: 'pink', note: `+${EARN.referrer}` },
-		{ href: '/me/settings#birthday', label: 'Birthday Treat', icon: 'cake', tint: 'mint', note: data.birthday ? '' : 'add date' },
+		{ href: '/recipe-book', label: 'My Rewards', icon: '🎟️', tint: 'pink', note: data.ready ? `${data.ready} ready` : '' },
+		{ href: '/recipe-book?tab=history', label: 'Crumb History', icon: '🧾', tint: 'butter', note: '' },
+		{ href: '/invite', label: 'Refer a Friend', icon: '❤️', tint: 'pink', note: `+${EARN.referrer}` },
+		{ href: '/me/settings#birthday', label: 'Birthday Treat', icon: '🎂', tint: 'mint', note: data.birthday ? '' : 'add date' },
 		{
 			href: '/me/settings#review',
 			label: 'Leave a Review',
-			icon: 'star',
+			icon: '⭐',
 			tint: 'butter',
 			note: data.review === 'approved' ? 'thank you!' : data.review === 'pending' ? 'checking' : `+${EARN.review}`
 		},
-		{ href: '/card', label: 'My QR Code', icon: 'qr', tint: 'grey', note: '' }
+		{ href: '/card', label: 'My QR Code', icon: '🔳', tint: 'grey', note: '' }
 	]);
 </script>
 
@@ -36,7 +36,7 @@
 	{#each rows as r (r.label)}
 		<li>
 			<a href={r.href}>
-				<span class="ic {r.tint}" aria-hidden="true"><img src={ART.icon[r.icon]} alt="" /></span>
+				<span class="ic {r.tint}" aria-hidden="true">{r.icon}</span>
 				<span class="lbl">{r.label}</span>
 				{#if r.note}<span class="note-txt">{r.note}</span>{/if}
 				<span class="chev" aria-hidden="true">›</span>
@@ -127,11 +127,6 @@
 		place-items: center;
 		font-size: 1.2rem;
 		flex: none;
-	}
-	.ic img {
-		width: 24px;
-		height: 24px;
-		object-fit: contain;
 	}
 	.ic.pink {
 		background: var(--pink);

@@ -23,7 +23,7 @@
 	<p class="code">{data.member.cardCode}</p>
 	<p class="pill butter"><img src={ART.food.cookie} alt="" /> {data.balance} Crumbs</p>
 </div>
-<p class="hand center hint">Show this at the counter to earn or spend Crumbs <img src={ART.icon.sparkle} alt="" class="px-ico" /></p>
+<p class="hand center hint">Show this at the counter to earn or spend Crumbs ✨</p>
 
 <style>
 	.qr-card {

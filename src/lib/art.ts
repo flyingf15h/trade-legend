@@ -6,8 +6,6 @@
 
 const a = (f: string) => `/art/${f}`;
 
-const px = (f: string) => `/art/px/${f}.svg`;
-
 export const ART = {
 	clawHead: a('claw-head.svg'),
 	clawArm: a('claw-arm.svg'),
@@ -19,58 +17,38 @@ export const ART = {
 		['pink', 'mint', 'butter', 'sky', 'lilac', 'peach'].map((c) => [c, a(`capsule-${c}.svg`)])
 	) as Record<string, string>,
 	capsuleSpecial: {
-		coffee: px('capsule-special-coffee'),
-		croissant: px('capsule-special-croissant'),
-		muffin: px('capsule-special-muffin'),
-		parfait: px('capsule-special-parfait')
+		coffee: a('capsule-special-coffee.svg'),
+		croissant: a('capsule-special-croissant.svg'),
+		muffin: a('capsule-special-muffin.svg'),
+		parfait: a('capsule-special-parfait.svg')
 	} as Record<string, string>,
-	crumbBox: px('crumb-box'),
-	sparkle: px('sparkle'),
-	twinkle: px('twinkle'),
-	cookieFace: px('cookie-face'),
-	spoon: px('spoon'),
-	jar: (n: number) => px(`jar-${Math.min(8, Math.max(1, n))}`),
+	crumbBox: a('crumb-box.svg'),
+	sparkle: a('sparkle.svg'),
+	twinkle: a('twinkle.svg'),
+	cookieFace: a('cookie-face.svg'),
+	spoon: a('spoon.svg'),
 	avatar: {
-		croissant: px('avatar-croissant'),
-		tart: px('avatar-tart'),
-		loaf: px('avatar-loaf'),
-		cookie: px('avatar-cookie')
+		croissant: a('avatar-croissant.svg'),
+		tart: a('avatar-tart.svg'),
+		loaf: a('avatar-loaf.svg'),
+		cookie: a('avatar-cookie.svg')
 	} as Record<string, string>,
-	// little pixel icons for tabs, lists and buttons
-	icon: {
-		house: px('house'),
-		gift: px('gift'),
-		star: px('star'),
-		heart: px('heart'),
-		ticket: px('ticket'),
-		receipt: px('receipt'),
-		qr: px('qr'),
-		dice: px('dice'),
-		pie: px('pie'),
-		croissant: px('croissant'),
-		cake: px('cake'),
-		cookie: px('cookie'),
-		spoon: px('spoon'),
-		sparkle: px('sparkle')
-	} as Record<string, string>,
-	// treats, flavours and reward pictures. The PNGs are the pictures you picked; the rest are
-	// pixel sprites drawn by scripts/pixel_sprites.py
+	// treats, flavours and reward pictures
 	food: {
-		bogo: px('bogo'),
-		cake: px('cake'),
+		bogo: a('bogo.svg'),
+		cake: a('cake.svg'),
 		coffee: a('coffee.png'),
-		cookie: px('cookie'),
-		croissant: px('croissant'),
-		crumble: px('crumble'),
-		muffin: px('muffin'),
+		cookie: a('cookie.svg'),
+		croissant: a('croissant.svg'),
+		crumble: a('crumble.svg'),
+		muffin: a('muffin.svg'),
 		parfait: a('parfait.png'),
-		pie: px('pie'),
 		pudding: a('pudding.png'),
 		puff: a('cream-cake.png'),
-		roll: px('roll'),
-		sample: px('sample'),
-		scone: px('scone'),
-		tag: px('tag'),
-		tart: px('tart')
+		roll: a('roll.svg'),
+		sample: a('sample.svg'),
+		scone: a('scone.svg'),
+		tag: a('tag.svg'),
+		tart: a('tart.svg')
 	} as Record<string, string>
 };

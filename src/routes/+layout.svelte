@@ -3,7 +3,6 @@
 	import '@fontsource-variable/nunito';
 	import '@fontsource/gaegu/400.css';
 	import '@fontsource/gaegu/700.css';
-	import '@fontsource/pixelify-sans';
 	import '../app.css';
 
 	let { children } = $props();

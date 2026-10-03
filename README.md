@@ -52,7 +52,7 @@ The cupboard's prize is rolled on the server when the turn starts, so refreshing
 
 ## Swapping in the hand-drawn art
 
-The small pictures and icons are pixel-art sprites drawn by `scripts/pixel_sprites.py` (edit the letter grids and rerun it). Every picture is listed in `src/lib/art.ts`. Drop the hand-drawn files in `static/art/` and point the matching entry at them. The claw machine's walls, posts, floor and chute are CSS in `ClawMachine.svelte`; the claw and capsules are images.
+Every drawing is a placeholder SVG in `static/art/`, listed in `src/lib/art.ts`. Drop the hand-drawn files in `static/art/` and point the matching entry at them. The claw machine's walls, posts, floor and chute are CSS in `ClawMachine.svelte`; the claw and capsules are images.
 
 Some food pictures are borrowed for the prototype: the parfait is by Comfy Tofu (via Pinterest), and the coffee, cream cake and pudding came from image search. Get the artists' permission or swap in the hand-drawn set before a real launch.
 

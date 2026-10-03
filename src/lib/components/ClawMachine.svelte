@@ -554,7 +554,8 @@
 		position: absolute;
 		width: 4px;
 		margin-left: -2px;
-		background: repeating-linear-gradient(#9c8579 0 5px, #c9b4aa 5px 9px);
+		background: #9c8579;
+		box-shadow: inset 1px 0 0 #c9b4aa;
 		z-index: 400;
 	}
 	.claw {
