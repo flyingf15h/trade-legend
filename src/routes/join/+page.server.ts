@@ -7,10 +7,10 @@ import { ClubError } from '#lib/server/club.ts';
 import { ICONS } from '#lib/rewards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals, cookies, url }) => {
+export const load: PageServerLoad = async ({ locals, cookies, url }) => {
 	if (locals.member) redirect(303, '/kitchen');
 	const ref = cookies.get('cc_ref');
-	const referrer = ref ? db.select({ name: members.name }).from(members).where(eq(members.referralCode, ref)).get() : undefined;
+	const referrer = ref ? await db.select({ name: members.name }).from(members).where(eq(members.referralCode, ref)).get() : undefined;
 	return { referrer: referrer?.name ?? null, mode: url.searchParams.get('mode') === 'back' ? 'back' : 'join' };
 };
 
@@ -35,7 +35,7 @@ export const actions: Actions = {
 		let code: string | null;
 		try {
 			phone = normalizePhone(values.phone);
-			code = sendCode(db, phone);
+			code = await sendCode(db, phone);
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { ...values, error: e.message });
 			throw e;
@@ -50,9 +50,9 @@ export const actions: Actions = {
 		let code: string | null;
 		try {
 			phone = normalizePhone(raw);
-			const m = db.select({ id: members.id }).from(members).where(eq(members.phone, phone)).get();
+			const m = await db.select({ id: members.id }).from(members).where(eq(members.phone, phone)).get();
 			if (!m) return fail(400, { phone: raw, back: true, error: 'We don’t have that number yet. Join below and Grandma will save you a seat!' });
-			code = sendCode(db, phone);
+			code = await sendCode(db, phone);
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { phone: raw, back: true, error: e.message });
 			throw e;

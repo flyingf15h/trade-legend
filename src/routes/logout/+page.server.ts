@@ -4,8 +4,8 @@ import { signOut } from '#lib/server/auth.ts';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	default: ({ cookies }) => {
-		signOut(db, cookies);
+	default: async ({ cookies }) => {
+		await signOut(db, cookies);
 		redirect(303, '/join?mode=back');
 	}
 };

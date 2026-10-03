@@ -8,7 +8,7 @@ export const actions: Actions = {
 		const key = String((await request.formData()).get('key') ?? '');
 		let code: string;
 		try {
-			code = redeemShelf(db, locals.member!.id, key).code;
+			code = (await redeemShelf(db, locals.member!.id, key)).code;
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { key, error: e.message });
 			throw e;

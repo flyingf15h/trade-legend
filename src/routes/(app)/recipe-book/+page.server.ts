@@ -8,7 +8,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	const m = locals.member!;
 	const now = new Date().toISOString();
-	const all = memberVouchers(db, m.id);
+	const all = await memberVouchers(db, m.id);
 	const ready = await Promise.all(
 		all
 			.filter((v) => v.status === 'ready' && v.expiresAt > now)
@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const past = all
 		.filter((v) => !(v.status === 'ready' && v.expiresAt > now))
 		.map((v) => ({ ...v, status: v.status === 'ready' ? 'expired' : v.status }));
-	const history = db
+	const history = await db
 		.select({ id: ledger.id, centi: ledger.centi, kind: ledger.kind, note: ledger.note, createdAt: ledger.createdAt })
 		.from(ledger)
 		.where(eq(ledger.memberId, m.id))

@@ -1,5 +1,5 @@
 import { count, eq } from 'drizzle-orm';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import * as schema from './schema';
 import { candidates, clawPlays, ledger, members, purchases, referrals, rounds, votes, vouchers } from './schema';
 import { addDays, monthOf, nextMonth, today } from '../time';
@@ -68,18 +68,20 @@ function prevMonth(month: string) {
 	return monthShift(month, -1);
 }
 
-export function seed(db: BetterSQLite3Database<typeof schema>) {
-	const existing = db.select({ n: count() }).from(rounds).get();
+export async function seed(db: LibSQLDatabase<typeof schema>) {
+	const existing = await db.select({ n: count() }).from(rounds).get();
 	if ((existing?.n ?? 0) > 0) return;
 
 	const day = today();
 	const thisMonth = monthOf(day);
 	const ago = (days: number, hour = 15) => new Date(addDays(day, -days) + `T${String(hour).padStart(2, '0')}:20:00Z`).toISOString();
 
-	db.transaction((tx) => {
-		const neighbourIds = NEIGHBOURS.map(
-			(name, i) =>
-				tx
+	await db.transaction(async (tx) => {
+		const neighbourIds: number[] = [];
+		for (const [i, name] of NEIGHBOURS.entries()) {
+			neighbourIds.push(
+				(
+					await tx
 					.insert(members)
 					.values({
 						phone: `519555${String(200 + i).padStart(4, '0')}`,
@@ -90,10 +92,12 @@ export function seed(db: BetterSQLite3Database<typeof schema>) {
 						createdAt: ago(120 - i)
 					})
 					.returning()
-					.get().id
-		);
+					.get()
+				).id
+			);
+		}
 
-		const sophie = tx
+		const sophie = await tx
 			.insert(members)
 			.values({
 				phone: '5195550123',
@@ -111,33 +115,35 @@ export function seed(db: BetterSQLite3Database<typeof schema>) {
 		for (const h of HISTORY) {
 			const month = monthShift(thisMonth, h.offset);
 			const votingMonth = prevMonth(month);
-			const round = tx
+			const round = await tx
 				.insert(rounds)
 				.values({ month, opensOn: `${votingMonth}-01`, closesOn: `${votingMonth}-20` })
 				.returning()
 				.get();
-			const ids = h.cands.map((c) => tx.insert(candidates).values({ ...c, roundId: round.id }).returning().get().id);
-			neighbourIds.forEach((mid, i) => {
+			const ids: number[] = [];
+			for (const c of h.cands) ids.push((await tx.insert(candidates).values({ ...c, roundId: round.id }).returning().get()).id);
+			for (const [i, mid] of neighbourIds.entries()) {
 				// the winner gets about half the neighbourhood
 				const pick = i % 2 === 0 ? h.winner : (h.winner + 1 + (i % 3 === 0 ? 1 : 0)) % 3;
-				tx.insert(votes).values({ roundId: round.id, memberId: mid, candidateId: ids[pick], createdAt: `${votingMonth}-0${(i % 9) + 1}T16:00:00.000Z` }).run();
-			});
-			tx.update(rounds).set({ winnerId: ids[h.winner] }).where(eq(rounds.id, round.id)).run();
+				await tx.insert(votes).values({ roundId: round.id, memberId: mid, candidateId: ids[pick], createdAt: `${votingMonth}-0${(i % 9) + 1}T16:00:00.000Z` }).run();
+			}
+			await tx.update(rounds).set({ winnerId: ids[h.winner] }).where(eq(rounds.id, round.id)).run();
 			if (h.offset === 0) {
-				tx.insert(votes).values({ roundId: round.id, memberId: sophie.id, candidateId: ids[0], createdAt: ago(25) }).run();
+				await tx.insert(votes).values({ roundId: round.id, memberId: sophie.id, candidateId: ids[0], createdAt: ago(25) }).run();
 			}
 		}
 
 		// Next month's ballot, open from the 1st to the 20th of this month.
-		const ballot = tx
+		const ballot = await tx
 			.insert(rounds)
 			.values({ month: nextMonth(thisMonth), opensOn: `${thisMonth}-01`, closesOn: `${thisMonth}-20` })
 			.returning()
 			.get();
-		const ballotIds = BALLOT.map((c) => tx.insert(candidates).values({ ...c, roundId: ballot.id }).returning().get().id);
-		neighbourIds.slice(0, 5).forEach((mid, i) => {
-			tx.insert(votes).values({ roundId: ballot.id, memberId: mid, candidateId: ballotIds[i % 3] }).run();
-		});
+		const ballotIds: number[] = [];
+		for (const c of BALLOT) ballotIds.push((await tx.insert(candidates).values({ ...c, roundId: ballot.id }).returning().get()).id);
+		for (const [i, mid] of neighbourIds.slice(0, 5).entries()) {
+			await tx.insert(votes).values({ roundId: ballot.id, memberId: mid, candidateId: ballotIds[i % 3] }).run();
+		}
 
 		// Sophie's history so the demo account has something to look at.
 		const buys: [number, number, string][] = [
@@ -149,23 +155,23 @@ export function seed(db: BetterSQLite3Database<typeof schema>) {
 			[3, 615, 'A latte']
 		];
 		for (const [d, cents, desc] of buys) {
-			const p = tx.insert(purchases).values({ memberId: sophie.id, eligibleCents: cents, description: desc, createdAt: ago(d) }).returning().get();
-			tx.insert(ledger).values({ memberId: sophie.id, centi: cents * 5, kind: 'purchase', note: `${desc} and a little happiness`, purchaseId: p.id, createdAt: ago(d) }).run();
+			const p = await tx.insert(purchases).values({ memberId: sophie.id, eligibleCents: cents, description: desc, createdAt: ago(d) }).returning().get();
+			await tx.insert(ledger).values({ memberId: sophie.id, centi: cents * 5, kind: 'purchase', note: `${desc} and a little happiness`, purchaseId: p.id, createdAt: ago(d) }).run();
 		}
-		tx.insert(ledger).values({ memberId: sophie.id, centi: 10000, kind: 'vote', note: `Voted for ${HISTORY[3].cands[0].name}`, createdAt: ago(25) }).run();
-		tx.insert(ledger).values({ memberId: sophie.id, centi: 15000, kind: 'referral', note: 'Theo came by for their first visit', createdAt: ago(30) }).run();
-		tx.insert(referrals).values({ referrerId: sophie.id, refereeId: neighbourIds[1], status: 'completed', createdAt: ago(33), completedAt: ago(30) }).run();
-		tx.insert(referrals).values({ referrerId: sophie.id, refereeId: neighbourIds[4], status: 'joined', createdAt: ago(6) }).run();
-		tx.insert(referrals).values({ referrerId: sophie.id, visitorToken: 'seed-invite', status: 'invited', createdAt: ago(2) }).run();
+		await tx.insert(ledger).values({ memberId: sophie.id, centi: 10000, kind: 'vote', note: `Voted for ${HISTORY[3].cands[0].name}`, createdAt: ago(25) }).run();
+		await tx.insert(ledger).values({ memberId: sophie.id, centi: 15000, kind: 'referral', note: 'Theo came by for their first visit', createdAt: ago(30) }).run();
+		await tx.insert(referrals).values({ referrerId: sophie.id, refereeId: neighbourIds[1], status: 'completed', createdAt: ago(33), completedAt: ago(30) }).run();
+		await tx.insert(referrals).values({ referrerId: sophie.id, refereeId: neighbourIds[4], status: 'joined', createdAt: ago(6) }).run();
+		await tx.insert(referrals).values({ referrerId: sophie.id, visitorToken: 'seed-invite', status: 'invited', createdAt: ago(2) }).run();
 
-		tx.insert(ledger).values({ memberId: sophie.id, centi: -10000, kind: 'redeem', note: 'Traded for: Free drink', createdAt: ago(20) }).run();
-		tx.insert(ledger).values({ memberId: sophie.id, centi: -25000, kind: 'redeem', note: 'Traded for: Free pastry', createdAt: ago(8) }).run();
-		tx.insert(vouchers).values({ memberId: sophie.id, code: voucherCode(), rewardKey: 'pastry', source: 'shelf', status: 'used', expiresAt: ago(-52), usedAt: ago(8), createdAt: ago(8) }).run();
-		tx.insert(vouchers).values({ memberId: sophie.id, code: voucherCode(), rewardKey: 'drink', source: 'shelf', status: 'used', expiresAt: ago(-40), usedAt: ago(19), createdAt: ago(20) }).run();
+		await tx.insert(ledger).values({ memberId: sophie.id, centi: -10000, kind: 'redeem', note: 'Traded for: Free drink', createdAt: ago(20) }).run();
+		await tx.insert(ledger).values({ memberId: sophie.id, centi: -25000, kind: 'redeem', note: 'Traded for: Free pastry', createdAt: ago(8) }).run();
+		await tx.insert(vouchers).values({ memberId: sophie.id, code: voucherCode(), rewardKey: 'pastry', source: 'shelf', status: 'used', expiresAt: ago(-52), usedAt: ago(8), createdAt: ago(8) }).run();
+		await tx.insert(vouchers).values({ memberId: sophie.id, code: voucherCode(), rewardKey: 'drink', source: 'shelf', status: 'used', expiresAt: ago(-40), usedAt: ago(19), createdAt: ago(20) }).run();
 
-		tx.insert(ledger).values({ memberId: sophie.id, centi: 1500, kind: 'cupboard', note: 'Found 15 Crumbs in a capsule', createdAt: ago(5, 18) }).run();
-		tx.insert(clawPlays).values({ memberId: sophie.id, day: addDays(day, -5), free: true, capsule: '{"type":"round","colour":"pink"}', prizeKey: 'crumbs15', createdAt: ago(5, 18) }).run();
-		tx.insert(clawPlays).values({ memberId: sophie.id, day: addDays(day, -1), free: true, capsule: '{"type":"special","shape":"croissant"}', prizeKey: 'croissant', createdAt: ago(1, 17) }).run();
-		tx.insert(vouchers).values({ memberId: sophie.id, code: voucherCode(), rewardKey: 'croissant', source: 'cupboard', expiresAt: ago(-29), createdAt: ago(1, 17) }).run();
+		await tx.insert(ledger).values({ memberId: sophie.id, centi: 1500, kind: 'cupboard', note: 'Found 15 Crumbs in a capsule', createdAt: ago(5, 18) }).run();
+		await tx.insert(clawPlays).values({ memberId: sophie.id, day: addDays(day, -5), free: true, capsule: '{"type":"round","colour":"pink"}', prizeKey: 'crumbs15', createdAt: ago(5, 18) }).run();
+		await tx.insert(clawPlays).values({ memberId: sophie.id, day: addDays(day, -1), free: true, capsule: '{"type":"special","shape":"croissant"}', prizeKey: 'croissant', createdAt: ago(1, 17) }).run();
+		await tx.insert(vouchers).values({ memberId: sophie.id, code: voucherCode(), rewardKey: 'croissant', source: 'cupboard', expiresAt: ago(-29), createdAt: ago(1, 17) }).run();
 	});
 }

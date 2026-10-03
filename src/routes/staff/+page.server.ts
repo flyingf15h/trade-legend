@@ -8,11 +8,11 @@ import { ClubError, useVoucher } from '#lib/server/club.ts';
 import { REWARDS } from '#lib/rewards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.staff) return { voucher: null };
 	const code = url.searchParams.get('voucher');
 	if (!code) return { voucher: null };
-	const v = db
+	const v = await db
 		.select({ v: vouchers, name: members.name, memberId: members.id })
 		.from(vouchers)
 		.innerJoin(members, eq(members.id, vouchers.memberId))
@@ -27,11 +27,11 @@ export const actions: Actions = {
 		// a little delay so the PIN can't be guessed quickly
 		await new Promise((r) => setTimeout(r, 400));
 		if (pin !== STAFF_PIN) return fail(400, { error: 'That PIN isn’t right.' });
-		staffSignIn(db, cookies);
+		await staffSignIn(db, cookies);
 		redirect(303, '/staff');
 	},
-	logout: ({ cookies }) => {
-		signOut(db, cookies, true);
+	logout: async ({ cookies }) => {
+		await signOut(db, cookies, true);
 		redirect(303, '/staff');
 	},
 	lookup: async ({ request, locals }) => {
@@ -41,7 +41,7 @@ export const actions: Actions = {
 		const upper = q.toUpperCase();
 		if (upper.startsWith('TREAT-')) redirect(303, `/staff?voucher=${encodeURIComponent(upper)}`);
 		const digits = q.replace(/\D/g, '').replace(/^1(?=\d{10}$)/, '');
-		const found = db
+		const found = await db
 			.select({ id: members.id, name: members.name, phone: members.phone })
 			.from(members)
 			.where(
@@ -61,7 +61,7 @@ export const actions: Actions = {
 		if (!locals.staff) redirect(303, '/staff');
 		const code = String((await request.formData()).get('code') ?? '');
 		try {
-			const v = useVoucher(db, code);
+			const v = await useVoucher(db, code);
 			return { used: REWARDS[v.rewardKey].title };
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { error: e.message });

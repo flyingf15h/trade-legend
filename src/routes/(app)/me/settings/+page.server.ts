@@ -6,11 +6,11 @@ import { ClubError, submitReview } from '#lib/server/club.ts';
 import { ICONS } from '#lib/rewards.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ locals }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const m = locals.member!;
 	return {
 		profile: { name: m.name, email: m.email, phone: m.phone, birthday: m.birthday, marketing: m.marketingOptIn, since: m.createdAt },
-		review: db.select({ status: reviews.status, link: reviews.link }).from(reviews).where(eq(reviews.memberId, m.id)).get() ?? null
+		review: await db.select({ status: reviews.status, link: reviews.link }).from(reviews).where(eq(reviews.memberId, m.id)).get() ?? null
 	};
 };
 
@@ -35,7 +35,7 @@ export const actions: Actions = {
 			if (!(mm >= 1 && mm <= 12 && dd >= 1 && dd <= max)) return fail(400, { profileError: 'That birthday doesn’t look right.' });
 			birthday = `${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
 		}
-		db.update(members)
+		await db.update(members)
 			.set({ name, email: email || null, icon, birthday, marketingOptIn: f.get('marketing') === 'on' })
 			.where(eq(members.id, locals.member!.id))
 			.run();
@@ -44,7 +44,7 @@ export const actions: Actions = {
 	review: async ({ request, locals }) => {
 		const link = String((await request.formData()).get('link') ?? '');
 		try {
-			submitReview(db, locals.member!.id, link);
+			await submitReview(db, locals.member!.id, link);
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { reviewError: e.message });
 			throw e;

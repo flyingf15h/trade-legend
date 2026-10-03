@@ -2,7 +2,7 @@
 
 Loyalty app for Grandma's Bakery. Customers scan a QR code at the counter, join with their phone number, and earn **Crumbs** (loyalty points) for shopping, voting on the flavour of the month, posting a review and bringing friends. They spend Crumbs on the Treat Shelf, and get one free turn a day at Grandma's Lucky Cupboard, a capsule claw machine that always pays out.
 
-Built with SvelteKit 3 (Svelte 5, TypeScript), SQLite through better-sqlite3 and Drizzle, and plain CSS.
+Built with SvelteKit 3 (Svelte 5, TypeScript), SQLite through libSQL and Drizzle (a local file in dev, Turso when hosted), and plain CSS.
 
 ## Run it
 
@@ -15,6 +15,18 @@ Open http://localhost:5173. The database (`local.db`) is created, migrated and f
 
 - **Demo customer:** sign in with `519 555 0123` to visit as Sophie. Sign-in codes are shown on screen in demo mode.
 - **Staff counter:** http://localhost:5173/staff, PIN `1234` (set `STAFF_PIN` in `.env`).
+
+## Vercel
+
+The app deploys to Vercel with the database on Turso (hosted SQLite):
+
+```bash
+turso db create crumb-club
+turso db show crumb-club --url        # DATABASE_URL
+turso db tokens create crumb-club     # DATABASE_AUTH_TOKEN
+```
+
+Set `DATABASE_URL`, `DATABASE_AUTH_TOKEN` and `STAFF_PIN` in the Vercel project's environment variables, then deploy. Tables and sample data are created on the first request.
 
 ## Production
 

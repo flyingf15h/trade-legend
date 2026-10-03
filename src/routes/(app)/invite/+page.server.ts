@@ -7,7 +7,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const m = locals.member!;
 	const link = `${url.origin}/hello/${m.referralCode}`;
-	const rows = db
+	const rows = await db
 		.select({ id: referrals.id, status: referrals.status, createdAt: referrals.createdAt, name: members.name })
 		.from(referrals)
 		.leftJoin(members, eq(members.id, referrals.refereeId))

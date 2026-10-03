@@ -18,7 +18,7 @@ function pending(cookies: import('@sveltejs/kit').Cookies): Pending | null {
 	}
 }
 
-export const load: PageServerLoad = ({ cookies }) => {
+export const load: PageServerLoad = async ({ cookies }) => {
 	const p = pending(cookies);
 	if (!p) redirect(303, '/join');
 	return { phone: p.phone, demoCode: cookies.get('cc_demo_code') ?? null };
@@ -30,7 +30,7 @@ export const actions: Actions = {
 		if (!p) redirect(303, '/join');
 		const code = String((await request.formData()).get('code') ?? '');
 		try {
-			checkCode(db, p.phone, code);
+			await checkCode(db, p.phone, code);
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { error: e.message });
 			throw e;
@@ -38,17 +38,17 @@ export const actions: Actions = {
 		cookies.delete('cc_pending', { path: '/' });
 		cookies.delete('cc_demo_code', { path: '/join' });
 
-		const existing = db.select().from(members).where(eq(members.phone, p.phone)).get();
+		const existing = await db.select().from(members).where(eq(members.phone, p.phone)).get();
 		if (existing) {
-			signIn(db, cookies, existing.id);
+			await signIn(db, cookies, existing.id);
 			redirect(303, '/kitchen');
 		}
 		if (!p.name) redirect(303, '/join');
 
 		const ref = cookies.get('cc_ref');
 		const visit = cookies.get('cc_visit');
-		const member = db.transaction((tx) => {
-			const m = tx
+		const member = await db.transaction(async (tx) => {
+			const m = await tx
 				.insert(members)
 				.values({
 					phone: p.phone,
@@ -61,12 +61,12 @@ export const actions: Actions = {
 				})
 				.returning()
 				.get();
-			linkReferral(tx, m.id, ref, visit);
+			await linkReferral(tx, m.id, ref, visit);
 			return m;
 		});
 		cookies.delete('cc_ref', { path: '/' });
 		cookies.delete('cc_visit', { path: '/' });
-		signIn(db, cookies, member.id);
+		await signIn(db, cookies, member.id);
 		redirect(303, '/welcome');
 	},
 
@@ -74,7 +74,7 @@ export const actions: Actions = {
 		const p = pending(cookies);
 		if (!p) redirect(303, '/join');
 		try {
-			const code = sendCode(db, p.phone);
+			const code = await sendCode(db, p.phone);
 			if (code) cookies.set('cc_demo_code', code, { path: '/join', sameSite: 'lax', maxAge: 900 });
 		} catch (e) {
 			if (e instanceof ClubError) return fail(400, { error: e.message });
