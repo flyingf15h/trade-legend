@@ -1,0 +1,295 @@
+:root {
+	--cream: #f7eddd;
+	--paper: #fffaf3;
+	--maroon: #7a2a25;
+	--maroon-dk: #5e1e1a;
+	--ink: #3b211c;
+	--muted: #8a7266;
+	--line: #e6d6bf;
+	--butter: #f2c94c;
+	--pink: #f4a7b0;
+	--mint: #a8d8b9;
+	--sky: #a9c8ee;
+	--peach: #f7c38a;
+	--red: #c8372c;
+	--olive: #6f7d24;
+	--shadow: 0 1px 2px rgba(94, 30, 26, 0.06), 0 6px 18px rgba(94, 30, 26, 0.07);
+	--display: 'Fraunces Variable', Georgia, serif;
+	--serif: 'Lora Variable', Georgia, serif;
+	--hand: 'Caveat', 'Segoe Print', cursive;
+	--nav-h: 68px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--cream);
+	-webkit-tap-highlight-color: transparent;
+}
+
+body {
+	margin: 0;
+	color: var(--ink);
+	font: 16px/1.5 var(--serif);
+	min-height: 100vh;
+	/* faint brick wall, like the shop's back wall */
+	background-color: var(--cream);
+	background-image:
+		linear-gradient(rgba(255, 250, 243, 0.55) 2px, transparent 2px),
+		linear-gradient(90deg, rgba(255, 250, 243, 0.55) 2px, transparent 2px);
+	background-size: 64px 28px, 64px 56px;
+	background-position: 0 0, 32px 0;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--display);
+	font-weight: 600;
+	color: var(--maroon);
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+	margin: 0 0 0.35em;
+}
+h1 {
+	font-size: 1.75rem;
+}
+h2 {
+	font-size: 1.3rem;
+}
+h3 {
+	font-size: 1.05rem;
+}
+p {
+	margin: 0 0 0.8em;
+}
+a {
+	color: var(--maroon);
+}
+img {
+	max-width: 100%;
+}
+
+.hand {
+	font-family: var(--hand);
+	font-size: 1.35em;
+	line-height: 1.1;
+}
+.muted {
+	color: var(--muted);
+}
+.small {
+	font-size: 0.875rem;
+}
+
+/* ---------- surfaces ---------- */
+
+.card {
+	background: var(--paper);
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	padding: 18px;
+	box-shadow: var(--shadow);
+}
+
+.gingham {
+	background-color: #fff;
+	background-image:
+		linear-gradient(90deg, rgba(244, 167, 176, 0.45) 50%, transparent 50%),
+		linear-gradient(rgba(244, 167, 176, 0.45) 50%, transparent 50%);
+	background-size: 18px 18px;
+}
+
+/* lined recipe card with a red margin rule */
+.recipe-card {
+	background-color: var(--paper);
+	background-image:
+		linear-gradient(90deg, transparent 30px, rgba(200, 55, 44, 0.35) 30px, rgba(200, 55, 44, 0.35) 32px, transparent 32px),
+		repeating-linear-gradient(transparent 0 27px, rgba(169, 200, 238, 0.55) 27px 28px);
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	box-shadow: var(--shadow);
+	padding: 14px 16px 14px 44px;
+}
+
+/* a note from Grandma, taped on */
+.note {
+	position: relative;
+	font-family: var(--hand);
+	font-size: 1.4rem;
+	line-height: 1.15;
+	color: var(--maroon-dk);
+	background: #fff6d8;
+	padding: 18px 18px 14px;
+	border-radius: 3px;
+	box-shadow: 0 6px 14px rgba(94, 30, 26, 0.12);
+	transform: rotate(-1.2deg);
+}
+.note::before {
+	content: '';
+	position: absolute;
+	top: -10px;
+	left: 50%;
+	width: 84px;
+	height: 22px;
+	margin-left: -42px;
+	background: rgba(169, 200, 238, 0.7);
+	transform: rotate(2deg);
+}
+
+/* ---------- controls ---------- */
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font: 600 1rem var(--display);
+	color: var(--paper);
+	background: var(--maroon);
+	border: 2px solid var(--maroon-dk);
+	border-radius: 999px;
+	padding: 12px 22px;
+	text-decoration: none;
+	cursor: pointer;
+	box-shadow: 0 3px 0 var(--maroon-dk);
+	transition: transform 0.08s, box-shadow 0.08s;
+}
+.btn:active {
+	transform: translateY(2px);
+	box-shadow: 0 1px 0 var(--maroon-dk);
+}
+.btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	transform: none;
+}
+.btn.soft {
+	color: var(--maroon);
+	background: var(--paper);
+	border-color: var(--maroon);
+	box-shadow: 0 3px 0 var(--line);
+}
+.btn.butter {
+	color: var(--maroon-dk);
+	background: var(--butter);
+	border-color: var(--maroon-dk);
+}
+.btn.block {
+	width: 100%;
+}
+.linkish {
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	color: var(--maroon);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+label.field {
+	display: block;
+	margin-bottom: 14px;
+}
+label.field > span {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+label.field small {
+	font-weight: 400;
+	color: var(--muted);
+}
+input[type='text'],
+input[type='tel'],
+input[type='email'],
+input[type='url'],
+input[type='number'],
+input[type='password'],
+input:not([type]),
+select,
+textarea {
+	width: 100%;
+	font: inherit;
+	color: var(--ink);
+	background: #fff;
+	border: 1.5px solid var(--line);
+	border-radius: 12px;
+	padding: 11px 13px;
+}
+input:focus,
+select:focus,
+textarea:focus,
+.btn:focus-visible {
+	outline: 3px solid rgba(242, 201, 76, 0.7);
+	outline-offset: 1px;
+	border-color: var(--maroon);
+}
+
+.error {
+	color: var(--red);
+	font-weight: 600;
+}
+
+.pill {
+	display: inline-block;
+	font-size: 0.78rem;
+	font-weight: 600;
+	padding: 2px 10px;
+	border-radius: 999px;
+	background: var(--cream);
+	color: var(--maroon);
+	border: 1px solid var(--line);
+}
+.pill.mint {
+	background: #e2f3e7;
+	color: #2f6a43;
+	border-color: #bfe2ca;
+}
+.pill.butter {
+	background: #fcefc4;
+	color: #7a5a10;
+	border-color: #f2dc8d;
+}
+.pill.pink {
+	background: #fde0e4;
+	color: #8f2f3c;
+	border-color: #f6c3ca;
+}
+
+.stack > * + * {
+	margin-top: 16px;
+}
+.row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.spread {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
