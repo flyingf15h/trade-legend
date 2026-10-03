@@ -68,7 +68,7 @@
 
 			<label class="check">
 				<input type="checkbox" name="marketing" checked={form && 'marketing' in form ? !!form.marketing : false} />
-				<span>Send me the odd note about new bakes and specials. <small class="muted">Totally optional, and separate from joining.</small></span>
+				<span>Subscribe to email updates about new bakes, specials and offers. <small class="muted">Needs an email above. Unsubscribe anytime.</small></span>
 			</label>
 
 			{#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}

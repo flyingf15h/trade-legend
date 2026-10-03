@@ -29,6 +29,7 @@ export const actions: Actions = {
 		const values = { name, email, phone: String(f.get('phone') ?? ''), icon, marketing: f.get('marketing') === 'on' };
 		if (!name) return fail(400, { ...values, error: 'Tell Grandma what to call you.' });
 		if (email && !/^\S+@\S+\.\S+$/.test(email)) return fail(400, { ...values, error: 'That email looks a little off.' });
+		if (values.marketing && !email) return fail(400, { ...values, error: 'Add your email to subscribe to updates.' });
 		if (!ICONS.some((i) => i.key === icon)) return fail(400, { ...values, error: 'Pick a little friend.' });
 		let phone: string;
 		let code: string | null;

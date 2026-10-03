@@ -12,13 +12,13 @@
 
 	const SOURCE: Record<string, string> = { shelf: 'From the Treat Shelf', cupboard: 'From the Lucky Cupboard', birthday: 'Happy birthday!' };
 	const KIND: Record<string, string> = {
-		purchase: '🧾',
-		return: '↩︎',
-		vote: '🥄',
-		referral: '💌',
-		review: '⭐',
-		cupboard: '🎁',
-		redeem: '🍪'
+		purchase: ART.icon.receipt,
+		return: ART.icon.receipt,
+		vote: ART.icon.spoon,
+		referral: ART.icon.heart,
+		review: ART.icon.star,
+		cupboard: ART.icon.gift,
+		redeem: ART.icon.cookie
 	};
 	const fmt = (centi: number) => {
 		const v = centi / 100;
@@ -90,7 +90,7 @@
 		{#each data.history as h (h.id)}
 			<li class="r-line">
 				<span class="r-date">{shortDate(h.createdAt)}</span>
-				<span class="r-note"><span aria-hidden="true">{KIND[h.kind] ?? '•'}</span> {h.note}.</span>
+				<span class="r-note"><img src={KIND[h.kind] ?? ART.icon.cookie} alt="" class="px-ico" /> {h.note}.</span>
 				<span class="r-amt" class:neg={h.centi < 0}>{fmt(h.centi)}</span>
 			</li>
 		{/each}

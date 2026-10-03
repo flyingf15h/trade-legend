@@ -11,9 +11,9 @@
 <svelte:head><title>Treat Shelf · Crumb Club</title></svelte:head>
 
 <h1 class="title">
-	Pick a little treat <span class="heart" aria-hidden="true">♡</span>
-	<span class="spark s1" aria-hidden="true">✦</span>
-	<span class="spark s2" aria-hidden="true">✧</span>
+	Pick a little treat <img src={ART.icon.heart} alt="" class="px-ico" />
+	<img src={ART.sparkle} alt="" class="spark s1" />
+	<img src={ART.sparkle} alt="" class="spark s2" />
 </h1>
 
 {#if form?.error}<p class="error center" role="alert">{form.error}</p>{/if}
@@ -67,14 +67,10 @@
 	.title {
 		position: relative;
 	}
-	.heart {
-		font-family: var(--body);
-		font-size: 0.8em;
-	}
 	.spark {
 		position: absolute;
-		color: #d9cfc8;
-		font-size: 1.4rem;
+		width: 16px;
+		opacity: 0.8;
 		pointer-events: none;
 	}
 	.s1 {

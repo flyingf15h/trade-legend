@@ -23,7 +23,7 @@
 
 {#if data.ballot}
 	{@const b = data.ballot}
-	<div class="center"><span class="pill butter reward">🍪 +{EARN.vote} Crumbs</span></div>
+	<div class="center"><span class="pill butter reward"><img src={ART.icon.cookie} alt="" class="px-ico" /> +{EARN.vote} Crumbs</span></div>
 
 	{#if form?.voted}
 		<p class="note center done">Your vote&rsquo;s in the mixing bowl! Here are {EARN.vote} Crumbs for helping.</p>
@@ -55,7 +55,7 @@
 							<button class="btn block">Vote</button>
 						</form>
 					{:else}
-						<p class="voted" class:mine>{mine ? '🥄 Your vote' : ' '}</p>
+						<p class="voted" class:mine>{#if mine}<img src={ART.spoon} alt="" class="px-ico wide" /> Your vote{:else}&nbsp;{/if}</p>
 					{/if}
 				</div>
 			</article>
@@ -76,7 +76,7 @@
 	<div class="arch-grid">
 		{#each data.archive as a (a.round)}
 			<div class="arch panel">
-				<span class="rosette" title="Neighbourhood Favourite">★</span>
+				<span class="rosette" title="Neighbourhood Favourite"><img src={ART.icon.star} alt="" /></span>
 				<img src={ART.food[a.c.art]} alt="" />
 				<b>{a.c.name}</b>
 				<span class="small muted">{monthName(a.month)} · {a.c.dish}</span>
@@ -243,10 +243,9 @@
 		height: 30px;
 		display: grid;
 		place-items: center;
-		border-radius: 50%;
-		background: var(--red);
-		color: var(--butter);
-		border: 3px double var(--paper);
+	}
+	.rosette img {
+		width: 28px;
 	}
 	.fridge {
 		margin-top: 30px;

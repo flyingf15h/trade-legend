@@ -25,6 +25,7 @@ export const actions: Actions = {
 		if (!name) return fail(400, { profileError: 'Grandma needs something to call you.' });
 		if (email && !/^\S+@\S+\.\S+$/.test(email)) return fail(400, { profileError: 'That email looks a little off.' });
 		if (!ICONS.some((i) => i.key === icon)) return fail(400, { profileError: 'Pick a little friend.' });
+		if (f.get('marketing') === 'on' && !email) return fail(400, { profileError: 'Add your email to subscribe to updates.' });
 		let birthday: string | null = locals.member!.birthday;
 		// the birthday can only be set once, so nobody moves it around for extra pastries
 		if (!birthday && month && day) {

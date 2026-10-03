@@ -52,7 +52,7 @@
 
 	<label class="check">
 		<input type="checkbox" name="marketing" checked={data.profile.marketing} />
-		<span>Send me the odd note about new bakes and specials.</span>
+		<span>Subscribe to email updates about new bakes, specials and offers. <small class="muted">Unsubscribe anytime.</small></span>
 	</label>
 	{#if form?.profileError}<p class="error">{form.profileError}</p>{/if}
 	{#if form?.saved}<p class="saved">Saved! Grandma&rsquo;s written it down.</p>{/if}

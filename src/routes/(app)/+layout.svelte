@@ -25,11 +25,11 @@
 	);
 
 	const tabs: { key: Tab; href: string; label: string; icon: string }[] = [
-		{ key: 'home', href: '/kitchen', label: 'Home', icon: 'M4 11.5 12 4l8 7.5M6 10v9.5h4.5V15h3v4.5H18V10' },
-		{ key: 'treats', href: '/treats', label: 'Treats', icon: 'M4 9h16v4H4zM5.5 13h13v7h-13zM12 9v11M12 9c-2-4-6-4-6-1.5S10 9 12 9c2 0 6 0 6-1.5S14 5 12 9' },
-		{ key: 'lucky', href: '/cupboard', label: 'Lucky', icon: 'M10 4c.6 3.4 2.6 5.4 6 6-3.4.6-5.4 2.6-6 6-.6-3.4-2.6-5.4-6-6 3.4-.6 5.4-2.6 6-6zM18 3c.3 1.4 1 2.1 2.4 2.4-1.4.3-2.1 1-2.4 2.4-.3-1.4-1-2.1-2.4-2.4 1.4-.3 2.1-1 2.4-2.4zM18 15c.3 1.4 1 2.1 2.4 2.4-1.4.3-2.1 1-2.4 2.4-.3-1.4-1-2.1-2.4-2.4 1.4-.3 2.1-1 2.4-2.4z' },
-		{ key: 'vote', href: '/tasting', label: 'Vote', icon: 'M5 13h12a6 6 0 0 1-12 0zM17 13l2-9M8 10c0-1 1-1.5 1-2.5S8 6 8 5M12 10c0-1 1-1.5 1-2.5S12 6 12 5' },
-		{ key: 'me', href: '/me', label: 'Me', icon: 'M3.5 15c0-4.5 3.8-8 8.5-8s8.5 3.5 8.5 8l-2.5 2H6zM9 8.2 8 16.5M15 8.2l1 8.3M12 7v9.5' }
+		{ key: 'home', href: '/kitchen', label: 'Home', icon: ART.icon.house },
+		{ key: 'treats', href: '/treats', label: 'Treats', icon: ART.icon.gift },
+		{ key: 'lucky', href: '/cupboard', label: 'Lucky', icon: ART.icon.star },
+		{ key: 'vote', href: '/tasting', label: 'Vote', icon: ART.icon.pie },
+		{ key: 'me', href: '/me', label: 'Me', icon: ART.icon.croissant }
 	];
 </script>
 
@@ -61,7 +61,7 @@
 	<div class="bar">
 		{#each tabs as t (t.key)}
 			<a href={t.href} class:on={here.tab === t.key} aria-current={here.tab === t.key ? 'page' : undefined}>
-				<span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={t.icon} /></svg></span>
+				<img src={t.icon} alt="" class="ico" />
 				<span>{t.label}</span>
 			</a>
 		{/each}
@@ -124,7 +124,7 @@
 		line-height: 1.1;
 	}
 	.club {
-		font: 800 0.8rem var(--body);
+		font: 600 0.82rem var(--pixel);
 		letter-spacing: 0.08em;
 		color: var(--maroon);
 	}
@@ -148,7 +148,7 @@
 		text-decoration: none;
 		border-radius: 999px;
 		padding: 6px 14px 6px 10px;
-		font: 800 1rem var(--body);
+		font: 600 1.05rem var(--pixel);
 	}
 	.crumbs img {
 		width: 20px;
@@ -193,24 +193,18 @@
 		gap: 1px;
 		color: var(--ink);
 		text-decoration: none;
-		font-size: 0.78rem;
-		font-weight: 600;
+		font: 500 0.78rem var(--pixel);
 		border-radius: 999px;
 		transition: background 0.15s;
 	}
-	.ico svg {
+	.ico {
 		display: block;
 		width: 26px;
-		height: 26px;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.8;
-		stroke-linecap: round;
-		stroke-linejoin: round;
+		height: 24px;
+		object-fit: contain;
 	}
 	.bar a.on {
 		background: var(--butter);
 		color: #5b4618;
-		font-weight: 800;
 	}
 </style>

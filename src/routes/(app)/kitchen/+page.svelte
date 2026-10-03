@@ -13,34 +13,34 @@
 
 <svelte:head><title>Crumb Club</title></svelte:head>
 
-<h1 class="hi">Hi {data.member.name} <span aria-hidden="true">♡</span></h1>
+<h1 class="hi">Hi {data.member.name} <img src={ART.icon.heart} alt="" class="px-ico" /></h1>
 
 <CookieJar {progress} />
 
 <div class="count">
 	<p class="crumbs">{data.balance} Crumbs</p>
 	<p class="hand to-go">
-		{#if next}{next.cost - data.balance} until your next reward{:else}Every treat on the shelf is yours{/if} ✨
+		{#if next}{next.cost - data.balance} until your next reward{:else}Every treat on the shelf is yours{/if} <img src={ART.icon.sparkle} alt="" class="px-ico" />
 	</p>
 </div>
 
 {#if data.boosts > 0}
-	<p class="pill butter boost">✨ Double Crumbs on your next purchase</p>
+	<p class="pill butter boost"><img src={ART.icon.sparkle} alt="" class="px-ico" /> Double Crumbs on your next purchase</p>
 {/if}
 
 <div class="actions">
 	<a href="/cupboard" class="action yellow">
-		<span class="emoji" aria-hidden="true">🎲</span>
+		<img src={ART.icon.dice} alt="" class="emoji" />
 		<span class="label">Play</span>
 		<span class="pill">{data.freePlay ? '1 free pull' : `${PLAY_COST} Crumbs`}</span>
 	</a>
 	<a href="/tasting" class="action pink">
-		<span class="emoji" aria-hidden="true">🥧</span>
+		<img src={ART.icon.pie} alt="" class="emoji" />
 		<span class="label">Vote</span>
 		<span class="pill">{data.ballot && !data.ballot.voted ? `+${EARN.vote} Crumbs` : data.ballot ? 'Voted ✓' : 'Archive'}</span>
 	</a>
 	<a href="/treats" class="action mint">
-		<span class="emoji" aria-hidden="true">🥐</span>
+		<img src={ART.icon.croissant} alt="" class="emoji" />
 		<span class="label">Treats</span>
 		<span class="pill">View rewards</span>
 	</a>
@@ -71,10 +71,7 @@
 		font-size: 2.4rem;
 		margin: 4px 0 10px;
 	}
-	.hi span {
-		font-family: var(--body);
-		font-size: 0.8em;
-	}
+
 	.count {
 		text-align: center;
 		margin: 12px 0 20px;
@@ -126,7 +123,9 @@
 		background: var(--mint);
 	}
 	.emoji {
-		font-size: 1.9rem;
+		width: 36px;
+		height: 36px;
+		object-fit: contain;
 	}
 	.label {
 		flex: 1;
@@ -135,7 +134,6 @@
 	.action .pill {
 		font-size: 0.9rem;
 		padding: 6px 14px;
-		box-shadow: 1px 2px 0 var(--ink);
 	}
 	.ready {
 		display: flex;

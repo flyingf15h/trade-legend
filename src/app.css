@@ -26,6 +26,7 @@
 	--display: 'Chewy', 'Comic Sans MS', system-ui, sans-serif;
 	--body: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
 	--hand: 'Gaegu', 'Comic Sans MS', cursive;
+	--pixel: 'Pixelify Sans', ui-monospace, monospace;
 	--nav-h: 76px;
 	--col: 440px;
 }
@@ -44,9 +45,29 @@ body {
 	margin: 0;
 	color: var(--ink);
 	font: 16px/1.45 var(--body);
-	background: var(--bg);
+	background-color: var(--bg);
+	/* faint pixel dots, like a sheet of graph paper on Grandma's counter */
+	background-image:
+		linear-gradient(rgba(143, 74, 74, 0.07) 2px, transparent 2px),
+		linear-gradient(90deg, rgba(143, 74, 74, 0.07) 2px, transparent 2px);
+	background-size: 28px 28px;
+	background-position: -13px -13px;
 	min-height: 100vh;
 	min-height: 100svh;
+}
+
+/* pixel sprites inline with text */
+.px-ico {
+	display: inline-block;
+	height: 1.05em;
+	width: auto;
+	vertical-align: -0.12em;
+}
+.px-ico.wide {
+	height: 0.8em;
+}
+img[src*='/px/'] {
+	image-rendering: pixelated;
 }
 
 h1,
@@ -251,29 +272,36 @@ textarea:focus,
 }
 
 .pill {
+	--edge: var(--ink);
 	display: inline-flex;
 	align-items: center;
-	gap: 4px;
-	font: 800 0.8rem var(--body);
+	gap: 5px;
+	font: 600 0.85rem var(--pixel);
 	padding: 4px 12px;
-	border-radius: 999px;
+	margin: 2px;
 	background: var(--paper);
 	color: var(--ink);
-	border: 2px solid var(--ink);
+	border: 0;
+	/* 8-bit border: four offset shadows leave the corners notched */
+	box-shadow:
+		0 -2px 0 0 var(--edge),
+		0 2px 0 0 var(--edge),
+		-2px 0 0 0 var(--edge),
+		2px 0 0 0 var(--edge);
 }
 .pill.mint {
 	background: var(--mint);
 }
 .pill.butter {
+	--edge: #d9b95a;
 	background: var(--butter);
-	border-color: var(--butter-dk);
 	color: #6b5521;
 }
 .pill.pink {
 	background: var(--pink);
 }
 .pill.flat {
-	border-color: var(--line);
+	--edge: var(--line);
 	color: var(--muted);
 	font-weight: 700;
 }
