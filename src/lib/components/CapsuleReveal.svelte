@@ -7,6 +7,7 @@
 
 	let {
 		capsule,
+		special = capsule.type === 'special',
 		prize,
 		label,
 		voucher,
@@ -15,6 +16,8 @@
 		onclose
 	}: {
 		capsule: Capsule;
+		// a treat prize: gold rays and an excited prompt, whatever the capsule looks like
+		special?: boolean;
 		prize: Prize;
 		label: string;
 		voucher: { code: string; expiresAt: string } | null;
@@ -45,7 +48,6 @@
 	let art = $derived(
 		prize.kind === 'crumbs' || prize.kind === 'double' ? ART.cookieFace : ART.food[REWARDS[prize.reward].art]
 	);
-	let special = $derived(capsule.type === 'special');
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->

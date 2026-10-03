@@ -33,8 +33,8 @@
 		label: string;
 		// how many turns were already taken today; each one speeds the claw up
 		turn?: number;
-		// asks the server for the result; returns the capsule the claw should come back with, or
-		// an error message
+		// asks the server for the result; resolves to anything but a string to go ahead, or an
+		// error message
 		start: () => Promise<Capsule | string>;
 		ondone: (capsule: Capsule) => void;
 	} = $props();
@@ -50,31 +50,33 @@
 	let falling = $state<{ cap: Capsule; y: number } | null>(null);
 	let speed = 160;
 
-	// ---- the long heap of capsules along the floor ----
+	// ---- a deep heap of capsules along the whole floor ----
+	// The treat-shaped capsules sit in the bottom two layers, under a full layer of round ones, so
+	// the claw can never reach them. They're just there to peek through and tempt.
 	let seed = 21;
 	const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 	type Piled = { id: number; x: number; y: number; rot: number; cap: Capsule };
 	const layers = [
-		{ y: 262, gap: 0 },
-		{ y: 236, gap: 0.25 },
-		{ y: 212, gap: 0.6 }
+		{ y: 266, gap: 0, specials: true },
+		{ y: 245, gap: 0, specials: true },
+		{ y: 224, gap: 0, specials: false },
+		{ y: 203, gap: 0.12, specials: false },
+		{ y: 182, gap: 0.45, specials: false }
 	];
 	const heap: Piled[] = [];
 	let n = 0;
+	const round = (): Capsule => ({ type: 'round', colour: CAPSULE_COLOURS[Math.floor(rand() * CAPSULE_COLOURS.length)] });
 	for (const [li, l] of layers.entries()) {
-		for (let px = 136 + li * 16; px < 1084; px += SIZE + 2 + rand() * 6) {
+		for (let px = 128 + (li % 2) * 15 + rand() * 4; px < 1088; px += SIZE - 6 + rand() * 4) {
 			if (rand() < l.gap) continue;
+			const special = l.specials && rand() < 0.13;
 			heap.push({
-				id: n,
+				id: n++,
 				x: px,
-				y: l.y + (rand() - 0.5) * 6,
+				y: l.y + (rand() - 0.5) * 5,
 				rot: (rand() - 0.5) * 40,
-				cap:
-					n % 9 === 4
-						? { type: 'special', shape: SPECIAL_SHAPES[n % SPECIAL_SHAPES.length] }
-						: { type: 'round', colour: CAPSULE_COLOURS[Math.floor(rand() * CAPSULE_COLOURS.length)] }
+				cap: special ? { type: 'special', shape: SPECIAL_SHAPES[Math.floor(rand() * SPECIAL_SHAPES.length)] } : round()
 			});
-			n++;
 		}
 	}
 	let pile = $state(heap);
@@ -137,8 +139,6 @@
 		drop();
 	}
 
-	let result: Capsule | null = null;
-
 	function setOpen(v: boolean) {
 		open = v;
 		document.body.style.overflow = v ? 'hidden' : '';
@@ -162,7 +162,6 @@
 			phase = 'idle';
 			return;
 		}
-		result = r;
 		phase = 'aim';
 	}
 
@@ -174,9 +173,10 @@
 
 	// the capsule under the claw: the highest one close by, or failing that the nearest
 	function target() {
-		const near = pile.filter((p) => Math.abs(p.x - x) < 22);
+		const reachable = pile.filter((p) => p.cap.type === 'round');
+		const near = reachable.filter((p) => Math.abs(p.x - x) < 22);
 		if (near.length) return near.reduce((a, b) => (b.y < a.y ? b : a));
-		return pile.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
+		return reachable.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
 	}
 
 	async function drop() {
@@ -192,7 +192,7 @@
 		await wait(140);
 		await animate(300, (t) => (arm = 32 - 28 * t));
 		pile = pile.filter((p) => p.id !== best.id);
-		held = result!;
+		held = best.cap;
 		await wait(180);
 		await animate(850, (t) => (y = targetY + (REST_Y - targetY) * t));
 		await wait(160);
@@ -209,8 +209,8 @@
 		await animate(480, (t) => (falling = { cap, y: from + (300 - from) * t * t }));
 		falling = null;
 		await animate(260, (t) => (arm = 28 - 18 * t));
-		// tip a fresh capsule back onto the heap for next time
-		pile = [...pile, { ...best, id: n++ }];
+		// tip a fresh capsule back onto the top of the heap for next time
+		pile = [...pile, { ...best, id: n++, cap: round() }];
 		phase = 'idle';
 		ondone(cap);
 	}

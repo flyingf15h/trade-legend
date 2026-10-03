@@ -18,7 +18,7 @@
 		balance: number;
 	};
 	let pending = $state<Result | null>(null);
-	let showing = $state<Result | null>(null);
+	let showing = $state<(Result & { special: boolean }) | null>(null);
 	let machine: ReturnType<typeof ClawMachine> | undefined = $state();
 
 	let canPlay = $derived(data.freePlay || data.balance >= PLAY_COST);
@@ -33,8 +33,9 @@
 		return pending.capsule;
 	}
 
-	function ondone() {
-		showing = pending;
+	// cap is the capsule the claw actually brought back; what's inside is the server's prize
+	function ondone(cap: Capsule) {
+		showing = pending ? { ...pending, special: pending.capsule.type === 'special', capsule: cap } : null;
 		pending = null;
 	}
 
@@ -81,6 +82,7 @@
 {#if showing}
 	<CapsuleReveal
 		capsule={showing.capsule}
+		special={showing.special}
 		prize={showing.prize}
 		label={showing.label}
 		voucher={showing.voucher}
