@@ -16,6 +16,14 @@ Open http://localhost:5173. The database (`local.db`) is created, migrated and f
 - **Demo customer:** sign in with `519 555 0123` to visit as Sophie. Sign-in codes are shown on screen in demo mode.
 - **Staff counter:** http://localhost:5173/staff, PIN `1234` (set `STAFF_PIN` in `.env`).
 
+## Production
+
+```bash
+ORIGIN=https://your-domain.example ./start.sh
+```
+
+`start.sh` builds (the public URL is baked into the build, so set `ORIGIN` to wherever it's served) and runs the Node server on `PORT` (default 3000). There's also a `Dockerfile`: build it with `--build-arg ORIGIN=...`, mount a volume at `/data` for the database, and set `STAFF_PIN`.
+
 ## What's in it
 
 | Page | What customers do |
