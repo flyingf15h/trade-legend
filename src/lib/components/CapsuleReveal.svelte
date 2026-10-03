@@ -43,19 +43,22 @@
 	}));
 
 	let art = $derived(
-		prize.kind === 'crumbs' ? ART.crumbBox : prize.kind === 'double' ? ART.food.cookie : ART.food[REWARDS[prize.reward].art]
+		prize.kind === 'crumbs' || prize.kind === 'double' ? ART.cookieFace : ART.food[REWARDS[prize.reward].art]
 	);
 	let special = $derived(capsule.type === 'special');
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div class="overlay" role="dialog" aria-modal="true" aria-label="Open your capsule" tabindex="-1" bind:this={dialog}>
+	<button class="close" onclick={onclose} aria-label="Close">
+		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+	</button>
 	<div class="stage">
 		{#if stage === 'open'}
 			<div class="rays" class:gold={special} aria-hidden="true"></div>
 			{#each sparkles as s, i (i)}
 				<img
-					src={ART.sparkle}
+					src={ART.twinkle}
 					alt=""
 					class="sparkle"
 					style="--a:{s.angle}deg; --d:{s.dist}px; width:{s.size}px; animation-delay:{s.delay}s"
@@ -82,10 +85,10 @@
 			{/if}
 			<div class="prize">
 				<img src={art} alt="" />
-				<h2>{prize.kind === 'crumbs' ? `+${prize.amount} Crumbs` : label}</h2>
+				<h2>{prize.kind === 'crumbs' ? `+${prize.amount} Crumbs!` : prize.kind === 'double' ? 'Double Crumbs!' : `${label}!`}</h2>
 				{#if prize.kind === 'voucher'}
 					<p>{REWARDS[prize.reward].terms}</p>
-					<p class="small muted">Tucked into your Recipe Book{voucher ? `, good until ${shortDate(voucher.expiresAt)}` : ''}.</p>
+					<p class="small muted">Saved in My Rewards{voucher ? `, good until ${shortDate(voucher.expiresAt)}` : ''}.</p>
 				{:else if prize.kind === 'double'}
 					<p>Your next purchase earns double Crumbs. Grandma will remember!</p>
 				{:else}
@@ -97,11 +100,13 @@
 
 	{#if stage === 'open'}
 		<div class="actions">
-			<button class="btn butter" onclick={onagain} disabled={balance < PLAY_COST}>Play again · {PLAY_COST} Crumbs</button>
+			<button class="btn salmon block yay" onclick={onclose}>Yay!</button>
 			{#if prize.kind === 'voucher'}
-				<a class="btn soft" href="/recipe-book{voucher ? `#${voucher.code}` : ''}">See it in my Recipe Book</a>
+				<a class="btn soft quiet block" href="/recipe-book{voucher ? `#${voucher.code}` : ''}">See it in My Rewards</a>
 			{/if}
-			<button class="linkish" onclick={onclose}>Back to the cupboard</button>
+			{#if balance >= PLAY_COST}
+				<button class="linkish" onclick={onagain}>Play again for {PLAY_COST} Crumbs</button>
+			{/if}
 		</div>
 	{/if}
 </div>
@@ -111,17 +116,37 @@
 		position: fixed;
 		inset: 0;
 		z-index: 100;
-		background: radial-gradient(circle at 50% 40%, rgba(122, 42, 37, 0.85), rgba(59, 33, 28, 0.95));
+		background: var(--bg);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 16px;
-		color: var(--paper);
+		padding: 16px 24px calc(24px + env(safe-area-inset-bottom));
+		color: var(--ink);
 		outline: none;
+	}
+	.close {
+		position: absolute;
+		top: calc(16px + env(safe-area-inset-top));
+		left: 16px;
+		width: 44px;
+		height: 44px;
+		border: 0;
+		background: none;
+		color: var(--ink);
+		cursor: pointer;
+	}
+	.close svg {
+		width: 28px;
+		height: 28px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.5;
+		stroke-linecap: round;
 	}
 	.stage {
 		position: relative;
+		margin-top: auto;
 		width: min(340px, 100%);
 		min-height: 360px;
 		display: flex;
@@ -183,7 +208,7 @@
 	.prompt {
 		margin-top: 20px;
 		font-size: 1.7rem;
-		color: var(--butter);
+		color: var(--maroon);
 	}
 	.fly {
 		position: absolute;
@@ -242,7 +267,7 @@
 		height: 560px;
 		margin: -280px 0 0 -280px;
 		border-radius: 50%;
-		background: repeating-conic-gradient(rgba(255, 246, 216, 0.22) 0 10deg, transparent 10deg 24deg);
+		background: repeating-conic-gradient(rgba(251, 232, 166, 0.55) 0 10deg, transparent 10deg 24deg);
 		mask: radial-gradient(circle, #000 20%, transparent 68%);
 		animation: spin 12s linear infinite, fadeIn 0.6s ease-out;
 		pointer-events: none;
@@ -283,23 +308,17 @@
 	}
 	.prize {
 		position: relative;
-		background: var(--paper);
-		color: var(--ink);
-		border-radius: 18px;
-		padding: 20px 20px 12px;
 		text-align: center;
 		width: 100%;
-		box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
 		animation: rise 0.6s 0.25s cubic-bezier(0.2, 1.4, 0.4, 1) both;
 	}
 	.prize img {
-		height: 96px;
-		margin-top: -64px;
-		filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.2));
+		height: 150px;
 	}
 	.prize h2 {
-		font-size: 1.7rem;
-		margin: 6px 0;
+		font-size: 2.8rem;
+		color: var(--maroon);
+		margin: 26px 0 8px;
 	}
 	@keyframes rise {
 		from {
@@ -308,18 +327,19 @@
 		}
 	}
 	.actions {
-		margin-top: 22px;
+		margin-top: auto;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 12px;
-		width: min(340px, 100%);
+		width: min(380px, 100%);
 		animation: fadeIn 0.4s 0.8s both;
 	}
 	.actions .btn {
 		width: 100%;
 	}
-	.actions .linkish {
-		color: var(--paper);
+	.yay {
+		font-size: 1.7rem;
+		padding: 18px;
 	}
 </style>

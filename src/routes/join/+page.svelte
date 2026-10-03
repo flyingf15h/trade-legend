@@ -96,7 +96,7 @@
 
 <style>
 	main {
-		max-width: 520px;
+		max-width: var(--col);
 		margin: 0 auto;
 		padding: 0 16px 48px;
 	}

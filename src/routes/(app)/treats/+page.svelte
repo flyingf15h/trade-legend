@@ -8,163 +8,148 @@
 	let item = $derived(SHELF.find((s) => s.key === picked) ?? null);
 </script>
 
-<svelte:head><title>The Treat Shelf · Crumb Club</title></svelte:head>
+<svelte:head><title>Treat Shelf · Crumb Club</title></svelte:head>
 
-<h1>The Treat Shelf</h1>
-<p class="muted">Trade your Crumbs for something guaranteed. You have <b>{data.balance}</b> Crumbs.</p>
+<h1 class="title">
+	Pick a little treat <span class="heart" aria-hidden="true">♡</span>
+	<span class="spark s1" aria-hidden="true">✦</span>
+	<span class="spark s2" aria-hidden="true">✧</span>
+</h1>
 
-{#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
+{#if form?.error}<p class="error center" role="alert">{form.error}</p>{/if}
 
 <div class="shelf">
 	{#each SHELF as s, i (s.key)}
 		{@const r = REWARDS[s.key]}
 		{@const ok = data.balance >= s.cost}
-		<button class="treat" class:locked={!ok} style="--tilt:{i % 2 ? 1.2 : -1.2}deg" onclick={() => (picked = s.key)}>
-			<img src={ART.food[r.art]} alt="" />
-			<span class="name">{r.title}</span>
-			<span class="short">{r.short}</span>
-			<span class="cost">{s.cost} <small>Crumbs</small></span>
-			{#if !ok}<span class="need">{s.cost - data.balance} to go</span>{/if}
-		</button>
+		<article class="card treat">
+			<div class="pic"><img src={ART.food[r.art]} alt="" /></div>
+			<h2>{r.title}</h2>
+			<p class="cost">{s.cost} Crumbs</p>
+			<button class="btn quiet block {i % 2 ? 'butter' : 'pinkish'}" disabled={!ok} onclick={() => (picked = s.key)}>
+				{ok ? 'Redeem' : `${s.cost - data.balance} more Crumbs`}
+			</button>
+		</article>
 	{/each}
 </div>
-<div class="plank" aria-hidden="true"></div>
 
-<p class="small muted rules">
-	One reward per visit, and percentage discounts can&rsquo;t be combined. Vouchers keep for {SHELF_DAYS} days in your Recipe Book.
+<p class="small muted center rules">
+	One reward per visit. Percentage discounts can&rsquo;t be combined. Treats keep for {SHELF_DAYS} days.
 </p>
 
 {#if item}
 	{@const r = REWARDS[item.key]}
-	{@const ok = data.balance >= item.cost}
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 	<div class="overlay" onclick={(e) => e.target === e.currentTarget && (picked = null)}>
-		<div class="sheet recipe-card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+		<div class="sheet card" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
 			<img src={ART.food[r.art]} alt="" class="sheet-art" />
 			<h2 id="sheet-title">{r.title}</h2>
 			<p>{r.terms}</p>
-			<p class="small">
-				Keeps for {SHELF_DAYS} days.{#if r.maxDiscount} Discount tops out at {r.maxDiscount}.{/if} Show the voucher at the counter
-				and staff will scan it.
+			<p class="small muted">
+				Keeps for {SHELF_DAYS} days.{#if r.maxDiscount} Takes up to {r.maxDiscount} off.{/if} Staff scan it at the counter.
 			</p>
-			{#if ok}
-				<form method="POST" action="?/redeem">
-					<input type="hidden" name="key" value={item.key} />
-					<button class="btn block">Trade {item.cost} Crumbs</button>
-				</form>
-				<p class="small muted after">You&rsquo;ll have {data.balance - item.cost} Crumbs left.</p>
-			{:else}
-				<p class="error">You need {item.cost - data.balance} more Crumbs for this one.</p>
-			{/if}
-			<button class="linkish" onclick={() => (picked = null)}>Maybe later</button>
+			<form method="POST" action="?/redeem">
+				<input type="hidden" name="key" value={item.key} />
+				<button class="btn block">Trade {item.cost} Crumbs</button>
+			</form>
+			<p class="small muted center left">You&rsquo;ll have {data.balance - item.cost} Crumbs left.</p>
+			<button class="linkish later" onclick={() => (picked = null)}>Maybe later</button>
 		</div>
 	</div>
 {/if}
 
 <style>
-	.shelf {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 14px;
-		margin-top: 12px;
+	.title {
+		text-align: center;
+		font-size: 2.3rem;
+		margin: 14px 0 22px;
 	}
-	.treat {
-		all: unset;
-		box-sizing: border-box;
-		cursor: pointer;
+	.title {
 		position: relative;
+	}
+	.heart {
+		font-family: var(--body);
+		font-size: 0.8em;
+	}
+	.spark {
+		position: absolute;
+		color: #d9cfc8;
+		font-size: 1.4rem;
+		pointer-events: none;
+	}
+	.s1 {
+		right: -4px;
+		top: -14px;
+	}
+	.s2 {
+		left: -6px;
+		bottom: -22px;
+	}
+	.shelf {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
+		gap: 22px;
+	}
+	.treat {
 		text-align: center;
-		padding: 14px 10px 12px;
-		background: var(--paper);
-		border: 2px dashed var(--maroon);
-		border-radius: 10px;
-		box-shadow: var(--shadow);
-		transform: rotate(var(--tilt));
-		transition: transform 0.12s;
+		padding: 22px 22px 20px;
+		border-radius: 30px;
 	}
-	.treat:hover,
-	.treat:focus-visible {
-		transform: rotate(0) translateY(-2px);
+	.pic {
+		height: 120px;
+		display: grid;
+		place-items: center;
+		margin-bottom: 10px;
 	}
-	.treat:focus-visible {
-		outline: 3px solid var(--butter);
+	.pic img {
+		max-height: 110px;
 	}
-	.treat img {
-		height: 64px;
-		margin-bottom: 6px;
-	}
-	.name {
-		font: 600 1.05rem var(--display);
-		color: var(--maroon);
-	}
-	.short {
-		font-family: var(--hand);
-		font-size: 1.15rem;
-		color: var(--muted);
-		line-height: 1;
-		margin-bottom: 8px;
+	.treat h2 {
+		font-size: 1.75rem;
+		margin-bottom: 2px;
 	}
 	.cost {
-		font: 700 1.1rem var(--display);
-		background: var(--butter);
-		color: var(--maroon-dk);
-		border-radius: 999px;
-		padding: 2px 12px;
-	}
-	.cost small {
-		font-weight: 400;
-		font-size: 0.75rem;
-	}
-	.locked img {
-		filter: grayscale(0.6);
-		opacity: 0.6;
-	}
-	.locked .cost {
-		background: var(--cream);
-	}
-	.need {
-		font-size: 0.75rem;
 		color: var(--muted);
-		margin-top: 4px;
+		font-size: 1.1rem;
+		margin-bottom: 14px;
 	}
-	.plank {
-		height: 14px;
-		margin: 16px -6px 0;
-		background: #8b3a2c;
-		border-radius: 3px;
-		box-shadow: 0 6px 0 #5e1e1a;
+	.treat .btn {
+		font-weight: 600;
+		font-size: 1.1rem;
+		padding: 13px;
+	}
+	.treat .btn:disabled {
+		opacity: 0.6;
+		background: #f1ece8;
+		box-shadow: none;
 	}
 	.rules {
-		margin-top: 22px;
+		margin-top: 24px;
 	}
 	.overlay {
 		position: fixed;
 		inset: 0;
 		z-index: 50;
-		background: rgba(59, 33, 28, 0.5);
+		background: rgba(58, 42, 37, 0.45);
 		display: flex;
 		align-items: flex-end;
 		justify-content: center;
-		padding: 16px;
+		padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
 	}
 	.sheet {
-		width: min(480px, 100%);
-		margin-bottom: calc(var(--nav-h) - 8px);
+		width: min(420px, 100%);
+		text-align: center;
 		animation: up 0.22s ease-out;
 	}
 	.sheet-art {
-		height: 70px;
+		height: 80px;
 	}
-	.after {
-		text-align: center;
-		margin: 6px 0;
+	.left {
+		margin: 8px 0 4px;
 	}
-	.sheet .linkish {
+	.later {
 		display: block;
-		margin: 6px auto 0;
+		margin: 4px auto 0;
 	}
 	@keyframes up {
 		from {

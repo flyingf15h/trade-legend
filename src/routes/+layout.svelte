@@ -1,7 +1,8 @@
 <script lang="ts">
-	import '@fontsource-variable/fraunces';
-	import '@fontsource-variable/lora';
-	import '@fontsource/caveat/600.css';
+	import '@fontsource/chewy';
+	import '@fontsource-variable/nunito';
+	import '@fontsource/gaegu/400.css';
+	import '@fontsource/gaegu/700.css';
 	import '../app.css';
 
 	let { children } = $props();
@@ -9,7 +10,7 @@
 
 <svelte:head>
 	<link rel="icon" href="/favicon.svg" />
-	<meta name="theme-color" content="#7a2a25" />
+	<meta name="theme-color" content="#fcf8f1" />
 </svelte:head>
 
 {@render children()}

@@ -1,185 +1,161 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { enhance } from '$app/forms';
 	import { ART } from '#lib/art.ts';
-	import { EARN, ICONS } from '#lib/rewards.ts';
-	import { prettyPhone, shortDate } from '#lib/format.ts';
+	import { EARN } from '#lib/rewards.ts';
 	import type { PageProps } from './$types';
 
-	let { data, form }: PageProps = $props();
-	let icon = $state(untrack(() => data.member.icon));
-	const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-	let bday = $derived(data.profile.birthday?.split('-').map(Number) ?? null);
+	let { data }: PageProps = $props();
+
+	let rows = $derived([
+		{ href: '/recipe-book', label: 'My Rewards', icon: '🎟️', tint: 'pink', note: data.ready ? `${data.ready} ready` : '' },
+		{ href: '/recipe-book?tab=history', label: 'Crumb History', icon: '🧾', tint: 'butter', note: '' },
+		{ href: '/invite', label: 'Refer a Friend', icon: '❤️', tint: 'pink', note: `+${EARN.referrer}` },
+		{ href: '/me/settings#birthday', label: 'Birthday Treat', icon: '🎂', tint: 'mint', note: data.birthday ? '' : 'add date' },
+		{
+			href: '/me/settings#review',
+			label: 'Leave a Review',
+			icon: '⭐',
+			tint: 'butter',
+			note: data.review === 'approved' ? 'thank you!' : data.review === 'pending' ? 'checking' : `+${EARN.review}`
+		},
+		{ href: '/card', label: 'My QR Code', icon: '🔳', tint: 'grey', note: '' }
+	]);
 </script>
 
-<svelte:head><title>My card · Crumb Club</title></svelte:head>
+<svelte:head><title>Me · Crumb Club</title></svelte:head>
 
-<div class="head">
-	<img src={ART.avatar[icon]} alt="" />
-	<div>
-		<h1>{data.profile.name}</h1>
-		<p class="muted small">Member since {shortDate(data.profile.since)} · {prettyPhone(data.profile.phone)}</p>
-	</div>
-</div>
-
-<form method="POST" action="?/profile" use:enhance class="card">
-	<h2>About you</h2>
-	<label class="field"><span>Name</span><input name="name" value={data.profile.name} required /></label>
-	<label class="field"
-		><span>Email <small>optional</small></span><input name="email" type="email" value={data.profile.email ?? ''} /></label
-	>
-	<fieldset class="icons">
-		<legend>Your little friend</legend>
-		{#each ICONS as i (i.key)}
-			<label class:on={icon === i.key}>
-				<input type="radio" name="icon" value={i.key} bind:group={icon} class="sr-only" />
-				<img src={ART.avatar[i.key]} alt={i.label} />
-			</label>
-		{/each}
-	</fieldset>
-
-	<div id="birthday" class="field">
-		<span class="lbl">Birthday <small>for a free pastry during your birthday week</small></span>
-		{#if bday}
-			<p class="bday">
-				<img src={ART.food.cake} alt="" />
-				{months[bday[0] - 1]} {bday[1]} <small class="muted">(ask at the counter if this needs fixing)</small>
-			</p>
-		{:else}
-			<div class="row">
-				<select name="bmonth" aria-label="Birthday month">
-					<option value="">Month</option>
-					{#each months as m, i (m)}<option value={i + 1}>{m}</option>{/each}
-				</select>
-				<input name="bday" type="number" min="1" max="31" placeholder="Day" aria-label="Birthday day" />
-			</div>
-		{/if}
-	</div>
-
-	<label class="check">
-		<input type="checkbox" name="marketing" checked={data.profile.marketing} />
-		<span>Send me the odd note about new bakes and specials.</span>
-	</label>
-	{#if form?.profileError}<p class="error">{form.profileError}</p>{/if}
-	{#if form?.saved}<p class="saved">Saved! Grandma&rsquo;s written it down.</p>{/if}
-	<button class="btn block">Save</button>
-</form>
-
-<section id="review" class="card review">
-	<h2>Say something nice? <span class="pill butter">+{EARN.review} Crumbs</span></h2>
-	{#if data.review?.status === 'approved'}
-		<p>Thank you for your review, dear. It made Grandma&rsquo;s day.</p>
-	{:else if data.review?.status === 'pending' || form?.reviewed}
-		<p>Got it! Staff will check your review and add the Crumbs soon.</p>
-	{:else}
-		<p class="small">Post a review of Grandma&rsquo;s on Google or Yelp, then paste the link here. Staff check it before the Crumbs go in.</p>
-		<form method="POST" action="?/review" use:enhance>
-			<input name="link" type="url" placeholder="https://g.co/kgs/…" required />
-			{#if data.review?.status === 'rejected'}<p class="small error">We couldn&rsquo;t find your last link. Try again?</p>{/if}
-			{#if form?.reviewError}<p class="error">{form.reviewError}</p>{/if}
-			<button class="btn soft block">Send it in</button>
-		</form>
-	{/if}
+<section class="who">
+	<a href="/me/settings" class="avatar" aria-label="Edit my details">
+		<img src={ART.avatar[data.member.icon]} alt="" />
+		<span class="edit" aria-hidden="true">✎</span>
+	</a>
+	<h1>{data.member.name}</h1>
+	<span class="pill butter big"><img src={ART.food.cookie} alt="" /> {data.balance} Crumbs</span>
 </section>
+
+<ul class="rows">
+	{#each rows as r (r.label)}
+		<li>
+			<a href={r.href}>
+				<span class="ic {r.tint}" aria-hidden="true">{r.icon}</span>
+				<span class="lbl">{r.label}</span>
+				{#if r.note}<span class="note-txt">{r.note}</span>{/if}
+				<span class="chev" aria-hidden="true">›</span>
+			</a>
+		</li>
+	{/each}
+</ul>
 
 <form method="POST" action="/logout" class="out">
 	<button class="linkish">Sign out</button>
 </form>
 
 <style>
-	.head {
+	.who {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin: 8px 0 22px;
+	}
+	.avatar {
+		position: relative;
+		width: 112px;
+		height: 112px;
+		border-radius: 50%;
+		background: #fff;
+		border: 5px solid var(--pink);
+		box-shadow: 0 0 0 2px #f2bcbc;
+		display: grid;
+		place-items: center;
+	}
+	.avatar img {
+		width: 92px;
+	}
+	.edit {
+		position: absolute;
+		right: -2px;
+		bottom: 2px;
+		width: 30px;
+		height: 30px;
+		border-radius: 50%;
+		background: var(--butter);
+		border: 2px solid var(--butter-dk);
+		display: grid;
+		place-items: center;
+		font-size: 0.9rem;
+		color: #6b5521;
+	}
+	h1 {
+		color: var(--maroon);
+		font-size: 2.6rem;
+		margin: 10px 0 6px;
+	}
+	.big {
+		font: 400 1.25rem var(--display);
+		padding: 8px 18px;
+	}
+	.big img {
+		width: 22px;
+	}
+	.rows {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.rows a {
 		display: flex;
 		align-items: center;
 		gap: 14px;
-		margin-bottom: 16px;
+		background: var(--paper);
+		border: 1.5px solid var(--line);
+		border-radius: 20px;
+		padding: 12px 16px 12px 12px;
+		min-height: 66px;
+		color: var(--ink);
+		text-decoration: none;
 	}
-	.head img {
-		width: 72px;
+	.rows a:active {
+		background: var(--cream);
 	}
-	.head h1 {
-		margin: 0;
-	}
-	.head p {
-		margin: 0;
-	}
-	.icons {
-		border: 0;
-		padding: 0;
-		margin: 0 0 14px;
-		display: flex;
-		gap: 8px;
-	}
-	.icons legend {
-		font-weight: 600;
-		margin-bottom: 6px;
-	}
-	.icons label {
-		border: 3px solid transparent;
+	.ic {
+		width: 42px;
+		height: 42px;
 		border-radius: 50%;
-		cursor: pointer;
-		line-height: 0;
-	}
-	.icons label.on {
-		border-color: var(--maroon);
-	}
-	.icons label:has(input:focus-visible) {
-		outline: 3px solid var(--butter);
-	}
-	.icons img {
-		width: 54px;
-	}
-	.lbl {
-		display: block;
-		font-weight: 600;
-		margin-bottom: 4px;
-	}
-	.lbl small {
-		font-weight: 400;
-		color: var(--muted);
-	}
-	.field {
-		margin-bottom: 14px;
-	}
-	.bday {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		margin: 0;
-	}
-	.bday img {
-		width: 36px;
-	}
-	.check {
-		display: flex;
-		gap: 10px;
-		align-items: flex-start;
-		margin-bottom: 14px;
-	}
-	.check input {
-		margin-top: 4px;
-		width: 18px;
-		height: 18px;
-		accent-color: var(--maroon);
+		display: grid;
+		place-items: center;
+		font-size: 1.2rem;
 		flex: none;
 	}
-	.saved {
-		color: var(--olive);
-		font-weight: 600;
+	.ic.pink {
+		background: var(--pink);
 	}
-	.review {
-		margin-top: 16px;
+	.ic.butter {
+		background: var(--butter);
 	}
-	.review h2 {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		flex-wrap: wrap;
+	.ic.mint {
+		background: var(--mint);
 	}
-	.review input {
-		margin-bottom: 10px;
+	.ic.grey {
+		background: #ebe7e2;
+	}
+	.lbl {
+		flex: 1;
+		font-weight: 800;
+		font-size: 1.1rem;
+	}
+	.note-txt {
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: var(--maroon);
+	}
+	.chev {
+		font-size: 1.5rem;
+		color: var(--muted);
 	}
 	.out {
 		text-align: center;
-		margin-top: 22px;
+		margin-top: 26px;
 	}
 </style>

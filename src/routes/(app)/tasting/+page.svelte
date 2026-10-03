@@ -6,58 +6,68 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
-	let choice = $state<number | null>(null);
-	const tilts = [-1.5, 1, -0.6];
+	let track: HTMLDivElement | undefined = $state();
+	let index = $state(0);
+	function onScroll() {
+		if (!track) return;
+		index = Math.round(track.scrollLeft / track.clientWidth);
+	}
+	function go(i: number) {
+		track?.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' });
+	}
 </script>
 
-<svelte:head><title>The Tasting Table · Crumb Club</title></svelte:head>
+<svelte:head><title>Vote · Crumb Club</title></svelte:head>
 
-<h1>The Tasting Table</h1>
+<h1 class="title">What should Grandma bake next?</h1>
 
 {#if data.ballot}
 	{@const b = data.ballot}
-	<p class="lead">Help Grandma decide what&rsquo;s coming out of the oven in <b>{monthName(b.round.month)}</b>!</p>
+	<div class="center"><span class="pill butter reward">🍪 +{EARN.vote} Crumbs</span></div>
 
 	{#if form?.voted}
-		<p class="note done">Your vote&rsquo;s in the mixing bowl! Here are {EARN.vote} Crumbs for helping.</p>
-	{:else if b.votedFor === null}
-		<p class="small muted">
-			One vote per member, worth <b>{EARN.vote} Crumbs</b>. Voting closes {shortDate(b.round.closesOn)}. If there&rsquo;s a tie, Grandma
-			picks the winner.
-		</p>
+		<p class="note center done">Your vote&rsquo;s in the mixing bowl! Here are {EARN.vote} Crumbs for helping.</p>
+	{:else if b.votedFor !== null}
+		<p class="small muted center">Thanks for voting! The winner goes on sale in {monthName(b.round.month)}.</p>
 	{:else}
-		<p class="small muted">Thanks for voting! We&rsquo;ll announce the winner after {shortDate(b.round.closesOn)}.</p>
+		<p class="small muted center">
+			For {monthName(b.round.month)}. One vote each, open until {shortDate(b.round.closesOn)}. If it&rsquo;s a tie, Grandma picks.
+		</p>
 	{/if}
+	{#if form?.error}<p class="error center" role="alert">{form.error}</p>{/if}
 
-	<form method="POST" action="?/vote" use:enhance class="ballot">
-		{#each b.candidates as c, i (c.id)}
+	<div class="carousel" bind:this={track} onscroll={onScroll}>
+		{#each b.candidates as c (c.id)}
 			{@const mine = b.votedFor === c.id}
-			<label class="recipe-card cand" class:mine class:picked={choice === c.id} style="--tilt:{tilts[i % 3]}deg">
-				{#if b.votedFor === null}
-					<input type="radio" name="candidate" value={c.id} bind:group={choice} class="sr-only" />
-				{/if}
-				{#if mine}<img src={ART.spoon} alt="Your vote" class="spoon" />{/if}
-				<div class="cand-top">
-					<img src={ART.food[c.art]} alt="" class="cand-art" />
-					<div>
-						<h2>{c.name}</h2>
-						<p class="dish">{c.dish}</p>
+			<article class="slide">
+				<div class="vote-card" class:mine>
+					<div class="pic">
+						<img src={ART.food[c.art]} alt="" />
+						{#if mine}<img src={ART.spoon} alt="" class="spoon" />{/if}
 					</div>
+					<h2>{c.name}</h2>
+					<p class="dish hand">{c.dish}</p>
+					<p class="small desc">{c.description}</p>
+					<p class="small"><b>Allergens:</b> {c.allergens}</p>
+					{#if b.votedFor === null}
+						<form method="POST" action="?/vote" use:enhance>
+							<input type="hidden" name="candidate" value={c.id} />
+							<button class="btn block">Vote</button>
+						</form>
+					{:else}
+						<p class="voted" class:mine>{mine ? '🥄 Your vote' : ' '}</p>
+					{/if}
 				</div>
-				<p>{c.description}</p>
-				<p class="small"><b>In it:</b> {c.ingredients}</p>
-				<p class="small allergens"><b>Contains:</b> {c.allergens}</p>
-			</label>
+			</article>
 		{/each}
-		{#if form?.error}<p class="error" role="alert">{form.error}</p>{/if}
-		{#if b.votedFor === null}
-			<button class="btn block vote-btn" disabled={choice === null}>
-				{choice === null ? 'Pick a recipe card' : `Vote for ${b.candidates.find((c) => c.id === choice)?.name}`}
-			</button>
-		{/if}
-	</form>
+	</div>
+	<div class="dots" aria-hidden="true">
+		{#each b.candidates as c, i (c.id)}
+			<button class:on={i === index} onclick={() => go(i)} tabindex="-1" aria-label="Show flavour {i + 1}"></button>
+		{/each}
+	</div>
 {:else}
-	<p class="lead">The ballot is resting. Grandma lays out new recipe cards on the 1st of every month.</p>
+	<p class="hand center lead">The ballot is resting. New recipe cards go up on the 1st of every month.</p>
 {/if}
 
 <section class="archive">
@@ -65,7 +75,7 @@
 	<p class="small muted">Every flavour the neighbourhood picked.</p>
 	<div class="arch-grid">
 		{#each data.archive as a (a.round)}
-			<div class="arch card">
+			<div class="arch panel">
 				<span class="rosette" title="Neighbourhood Favourite">★</span>
 				<img src={ART.food[a.c.art]} alt="" />
 				<b>{a.c.name}</b>
@@ -98,70 +108,109 @@
 </section>
 
 <style>
+	.title {
+		text-align: center;
+		font-size: 2.3rem;
+		margin: 8px 0 12px;
+	}
+	.reward {
+		font: 400 1.1rem var(--display);
+		padding: 6px 16px;
+		margin-bottom: 10px;
+	}
 	.lead {
-		font-family: var(--hand);
-		font-size: 1.45rem;
-		line-height: 1.15;
-		margin-bottom: 8px;
+		font-size: 1.4rem;
 	}
 	.done {
-		margin: 10px 0 18px;
+		margin: 4px 0 12px;
 	}
-	.ballot {
-		margin-top: 14px;
-	}
-	.cand {
-		position: relative;
-		display: block;
-		margin-bottom: 16px;
-		cursor: pointer;
-		transform: rotate(var(--tilt));
-		transition: transform 0.15s, box-shadow 0.15s;
-		line-height: 28px;
-	}
-	.cand p {
-		margin: 0;
-	}
-	.cand.picked,
-	.cand.mine {
-		transform: rotate(0) scale(1.015);
-		box-shadow: 0 0 0 3px var(--maroon), var(--shadow);
-	}
-	.cand:has(input:focus-visible) {
-		outline: 3px solid var(--butter);
-	}
-	.cand-top {
+	.carousel {
 		display: flex;
-		gap: 12px;
-		align-items: center;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		scrollbar-width: none;
+		margin: 8px -18px 0;
+		-webkit-overflow-scrolling: touch;
 	}
-	.cand-art {
-		width: 70px;
-		height: 70px;
-		flex: none;
+	.carousel::-webkit-scrollbar {
+		display: none;
 	}
-	.cand h2 {
-		margin: 0;
+	.slide {
+		flex: 0 0 100%;
+		scroll-snap-align: center;
+		padding: 6px 18px 10px;
 	}
-	.dish {
-		font-family: var(--hand);
-		font-size: 1.3rem;
-		color: var(--muted);
+	.vote-card {
+		background: var(--paper);
+		border: 1.5px solid var(--line);
+		border-radius: 30px;
+		padding: 18px;
+		box-shadow: var(--soft-shadow);
+		text-align: center;
 	}
-	.allergens {
-		color: var(--red);
+	.vote-card.mine {
+		border: 2px solid var(--ink);
+		box-shadow: var(--shadow);
+	}
+	.pic {
+		position: relative;
+		height: 200px;
+		border-radius: 22px;
+		background: #fff4f4;
+		border: 1.5px solid #f6dede;
+		display: grid;
+		place-items: center;
+		margin-bottom: 14px;
+	}
+	.pic img {
+		max-height: 140px;
 	}
 	.spoon {
 		position: absolute;
-		top: -14px;
-		right: -6px;
-		width: 110px;
-		transform: rotate(-20deg);
-		filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.15));
+		right: -10px;
+		bottom: 8px;
+		width: 120px;
+		transform: rotate(-18deg);
 	}
-	.vote-btn {
-		position: sticky;
-		bottom: calc(var(--nav-h) + 12px);
+	.vote-card h2 {
+		font-size: 2rem;
+		margin: 0;
+	}
+	.dish {
+		color: var(--muted);
+		font-size: 1.3rem;
+		margin: 0 0 6px;
+	}
+	.desc {
+		margin-bottom: 4px;
+	}
+	.vote-card .btn {
+		margin-top: 12px;
+		border-radius: 18px;
+	}
+	.voted {
+		margin: 12px 0 0;
+		min-height: 1.5em;
+		font: 400 1.3rem var(--display);
+		color: var(--maroon);
+	}
+	.dots {
+		display: flex;
+		justify-content: center;
+		gap: 10px;
+		margin: 10px 0 0;
+	}
+	.dots button {
+		width: 12px;
+		height: 12px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: #e6d9d6;
+		cursor: pointer;
+	}
+	.dots button.on {
+		background: var(--maroon);
 	}
 	.archive {
 		margin-top: 30px;

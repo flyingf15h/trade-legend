@@ -1,66 +1,42 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
-	let { children, small = false }: { children?: Snippet; small?: boolean } = $props();
+	import { ART } from '#lib/art.ts';
 </script>
 
-<header class="awning" class:small>
-	<div class="stripes" aria-hidden="true"></div>
-	<div class="inner">
-		{#if children}{@render children()}{:else}
-			<div class="brand">
-				<span class="title">The Crumb Club</span>
-				<span class="sub">at Grandma&rsquo;s Bakery</span>
-			</div>
-		{/if}
-	</div>
+<header class="top">
+	<span class="logo"><img src={ART.food.cookie} alt="" /></span>
+	<span class="club">CRUMB CLUB</span>
+	<span class="sub">at Grandma&rsquo;s Bakery</span>
 </header>
 
 <style>
-	.awning {
-		position: relative;
-		z-index: 3;
-		background: var(--maroon);
-		color: var(--paper);
-		padding: 14px 18px 12px;
-		margin-bottom: 24px;
-	}
-	.stripes {
-		position: absolute;
-		inset: 0 0 auto 0;
-		height: 6px;
-		background: repeating-linear-gradient(90deg, var(--maroon) 0 22px, #f7eddd 22px 44px);
-		opacity: 0.9;
-	}
-	.awning::after {
-		content: '';
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: -16px;
-		height: 16px;
-		background: radial-gradient(circle at 20px 0, var(--maroon) 19px, transparent 20px) 0 0 / 40px 16px repeat-x;
-	}
-	.inner {
-		max-width: 560px;
-		margin: 0 auto;
-		padding-top: 4px;
-	}
-	.brand {
+	.top {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		text-align: center;
+		padding: calc(22px + env(safe-area-inset-top)) 16px 8px;
 	}
-	.title {
-		font: 600 1.6rem/1.1 var(--display);
-		letter-spacing: -0.01em;
+	.logo {
+		width: 56px;
+		height: 56px;
+		border-radius: 50%;
+		background: var(--cream);
+		border: 2px solid var(--ink);
+		box-shadow: 2px 3px 0 var(--ink);
+		display: grid;
+		place-items: center;
+		margin-bottom: 8px;
+	}
+	.logo img {
+		width: 38px;
+	}
+	.club {
+		font: 800 1.05rem var(--body);
+		letter-spacing: 0.1em;
 	}
 	.sub {
 		font-family: var(--hand);
-		font-size: 1.25rem;
-		opacity: 0.85;
-	}
-	.small .title {
-		font-size: 1.25rem;
+		font-size: 1.2rem;
+		color: var(--muted);
+		margin-top: -2px;
 	}
 </style>

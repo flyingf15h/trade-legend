@@ -1,23 +1,33 @@
+/* Styled after the Making Dough design board: Chewy headings, Nunito body, Gaegu notes,
+   white "sticker" cards with a dark outline and a hard offset shadow. Built for phones. */
 :root {
-	--cream: #f7eddd;
-	--paper: #fffaf3;
-	--maroon: #7a2a25;
-	--maroon-dk: #5e1e1a;
-	--ink: #3b211c;
-	--muted: #8a7266;
-	--line: #e6d6bf;
-	--butter: #f2c94c;
-	--pink: #f4a7b0;
-	--mint: #a8d8b9;
-	--sky: #a9c8ee;
-	--peach: #f7c38a;
-	--red: #c8372c;
-	--olive: #6f7d24;
-	--shadow: 0 1px 2px rgba(94, 30, 26, 0.06), 0 6px 18px rgba(94, 30, 26, 0.07);
-	--display: 'Fraunces Variable', Georgia, serif;
-	--serif: 'Lora Variable', Georgia, serif;
-	--hand: 'Caveat', 'Segoe Print', cursive;
-	--nav-h: 68px;
+	--bg: #fcf8f1;
+	--paper: #ffffff;
+	--ink: #3a2a25;
+	--muted: #8a7a72;
+	--line: #ecdcd8;
+	--maroon: #8f4a4a;
+	--maroon-dk: #6f3434;
+	--rust: #9a3b1a;
+	--butter: #fbe8a6;
+	--butter-dk: #f3d98a;
+	--gold: #fbbf4a;
+	--pink: #fdd9d8;
+	--salmon: #fea9a6;
+	--mint: #d4e8d6;
+	--sage: #c5d1b3;
+	--sky: #cfe6f2;
+	--lilac: #eeb5cc;
+	--cream: #fcf3e6;
+	--red: #c8473c;
+	--olive: #4d7a4f;
+	--shadow: 3px 4px 0 var(--ink);
+	--soft-shadow: 0 6px 18px rgba(58, 42, 37, 0.08);
+	--display: 'Chewy', 'Comic Sans MS', system-ui, sans-serif;
+	--body: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
+	--hand: 'Gaegu', 'Comic Sans MS', cursive;
+	--nav-h: 76px;
+	--col: 440px;
 }
 
 * {
@@ -25,42 +35,38 @@
 }
 
 html {
-	background: var(--cream);
+	background: var(--bg);
 	-webkit-tap-highlight-color: transparent;
+	-webkit-text-size-adjust: 100%;
 }
 
 body {
 	margin: 0;
 	color: var(--ink);
-	font: 16px/1.5 var(--serif);
+	font: 16px/1.45 var(--body);
+	background: var(--bg);
 	min-height: 100vh;
-	/* faint brick wall, like the shop's back wall */
-	background-color: var(--cream);
-	background-image:
-		linear-gradient(rgba(255, 250, 243, 0.55) 2px, transparent 2px),
-		linear-gradient(90deg, rgba(255, 250, 243, 0.55) 2px, transparent 2px);
-	background-size: 64px 28px, 64px 56px;
-	background-position: 0 0, 32px 0;
+	min-height: 100svh;
 }
 
 h1,
 h2,
 h3 {
 	font-family: var(--display);
-	font-weight: 600;
-	color: var(--maroon);
-	line-height: 1.15;
-	letter-spacing: -0.01em;
+	font-weight: 400;
+	color: var(--ink);
+	line-height: 1.1;
+	letter-spacing: 0.01em;
 	margin: 0 0 0.35em;
 }
 h1 {
-	font-size: 1.75rem;
+	font-size: 2.1rem;
 }
 h2 {
-	font-size: 1.3rem;
+	font-size: 1.5rem;
 }
 h3 {
-	font-size: 1.05rem;
+	font-size: 1.2rem;
 }
 p {
 	margin: 0 0 0.8em;
@@ -74,8 +80,8 @@ img {
 
 .hand {
 	font-family: var(--hand);
-	font-size: 1.35em;
-	line-height: 1.1;
+	font-size: 1.2em;
+	line-height: 1.15;
 }
 .muted {
 	color: var(--muted);
@@ -83,60 +89,47 @@ img {
 .small {
 	font-size: 0.875rem;
 }
+.center {
+	text-align: center;
+}
 
 /* ---------- surfaces ---------- */
 
+/* white sticker card with a hard offset shadow */
 .card {
 	background: var(--paper);
-	border: 1px solid var(--line);
-	border-radius: 16px;
+	border: 2px solid var(--ink);
+	border-radius: 24px;
 	padding: 18px;
 	box-shadow: var(--shadow);
 }
 
-.gingham {
-	background-color: #fff;
-	background-image:
-		linear-gradient(90deg, rgba(244, 167, 176, 0.45) 50%, transparent 50%),
-		linear-gradient(rgba(244, 167, 176, 0.45) 50%, transparent 50%);
-	background-size: 18px 18px;
+/* softer card for lists and secondary panels */
+.panel {
+	background: var(--paper);
+	border: 1.5px solid var(--line);
+	border-radius: 20px;
+	padding: 16px;
 }
 
-/* lined recipe card with a red margin rule */
+/* kept for older markup: now just a soft panel */
 .recipe-card {
-	background-color: var(--paper);
-	background-image:
-		linear-gradient(90deg, transparent 30px, rgba(200, 55, 44, 0.35) 30px, rgba(200, 55, 44, 0.35) 32px, transparent 32px),
-		repeating-linear-gradient(transparent 0 27px, rgba(169, 200, 238, 0.55) 27px 28px);
-	border: 1px solid var(--line);
-	border-radius: 6px;
-	box-shadow: var(--shadow);
-	padding: 14px 16px 14px 44px;
+	background: var(--paper);
+	border: 1.5px solid var(--line);
+	border-radius: 20px;
+	padding: 16px;
 }
 
-/* a note from Grandma, taped on */
+/* a note from Grandma in handwriting */
 .note {
-	position: relative;
 	font-family: var(--hand);
-	font-size: 1.4rem;
-	line-height: 1.15;
-	color: var(--maroon-dk);
-	background: #fff6d8;
-	padding: 18px 18px 14px;
-	border-radius: 3px;
-	box-shadow: 0 6px 14px rgba(94, 30, 26, 0.12);
-	transform: rotate(-1.2deg);
-}
-.note::before {
-	content: '';
-	position: absolute;
-	top: -10px;
-	left: 50%;
-	width: 84px;
-	height: 22px;
-	margin-left: -42px;
-	background: rgba(169, 200, 238, 0.7);
-	transform: rotate(2deg);
+	font-size: 1.3rem;
+	line-height: 1.2;
+	color: var(--ink);
+	background: var(--butter);
+	border: 2px dashed var(--butter-dk);
+	padding: 12px 16px;
+	border-radius: 18px;
 }
 
 /* ---------- controls ---------- */
@@ -146,36 +139,58 @@ img {
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	font: 600 1rem var(--display);
-	color: var(--paper);
+	font: 400 1.35rem/1 var(--display);
+	letter-spacing: 0.02em;
+	color: #fff;
 	background: var(--maroon);
 	border: 2px solid var(--maroon-dk);
 	border-radius: 999px;
-	padding: 12px 22px;
+	padding: 16px 26px;
 	text-decoration: none;
 	cursor: pointer;
-	box-shadow: 0 3px 0 var(--maroon-dk);
 	transition: transform 0.08s, box-shadow 0.08s;
+	-webkit-user-select: none;
+	user-select: none;
 }
 .btn:active {
 	transform: translateY(2px);
-	box-shadow: 0 1px 0 var(--maroon-dk);
 }
 .btn:disabled {
 	opacity: 0.45;
 	cursor: not-allowed;
 	transform: none;
 }
+/* outlined sticker buttons */
+.btn.soft,
+.btn.salmon,
+.btn.butter,
+.btn.pinkish {
+	color: var(--ink);
+	border-color: var(--ink);
+	box-shadow: 2px 3px 0 var(--ink);
+}
 .btn.soft {
-	color: var(--maroon);
 	background: var(--paper);
-	border-color: var(--maroon);
-	box-shadow: 0 3px 0 var(--line);
+}
+.btn.salmon {
+	background: var(--salmon);
+	color: var(--maroon-dk);
 }
 .btn.butter {
-	color: var(--maroon-dk);
 	background: var(--butter);
-	border-color: var(--maroon-dk);
+}
+.btn.pinkish {
+	background: var(--pink);
+}
+.btn.soft:active,
+.btn.salmon:active,
+.btn.butter:active,
+.btn.pinkish:active {
+	box-shadow: 0 1px 0 var(--ink);
+}
+.btn.quiet {
+	font: 600 1rem var(--body);
+	padding: 12px 20px;
 }
 .btn.block {
 	width: 100%;
@@ -196,7 +211,7 @@ label.field {
 }
 label.field > span {
 	display: block;
-	font-weight: 600;
+	font-weight: 700;
 	margin-bottom: 4px;
 }
 label.field small {
@@ -214,50 +229,53 @@ select,
 textarea {
 	width: 100%;
 	font: inherit;
+	font-size: 16px; /* stops iOS zooming in on focus */
 	color: var(--ink);
 	background: #fff;
-	border: 1.5px solid var(--line);
-	border-radius: 12px;
-	padding: 11px 13px;
+	border: 2px solid var(--line);
+	border-radius: 16px;
+	padding: 12px 14px;
 }
 input:focus,
 select:focus,
 textarea:focus,
 .btn:focus-visible {
-	outline: 3px solid rgba(242, 201, 76, 0.7);
+	outline: 3px solid rgba(251, 191, 74, 0.6);
 	outline-offset: 1px;
-	border-color: var(--maroon);
+	border-color: var(--ink);
 }
 
 .error {
 	color: var(--red);
-	font-weight: 600;
+	font-weight: 700;
 }
 
 .pill {
-	display: inline-block;
-	font-size: 0.78rem;
-	font-weight: 600;
-	padding: 2px 10px;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font: 800 0.8rem var(--body);
+	padding: 4px 12px;
 	border-radius: 999px;
-	background: var(--cream);
-	color: var(--maroon);
-	border: 1px solid var(--line);
+	background: var(--paper);
+	color: var(--ink);
+	border: 2px solid var(--ink);
 }
 .pill.mint {
-	background: #e2f3e7;
-	color: #2f6a43;
-	border-color: #bfe2ca;
+	background: var(--mint);
 }
 .pill.butter {
-	background: #fcefc4;
-	color: #7a5a10;
-	border-color: #f2dc8d;
+	background: var(--butter);
+	border-color: var(--butter-dk);
+	color: #6b5521;
 }
 .pill.pink {
-	background: #fde0e4;
-	color: #8f2f3c;
-	border-color: #f6c3ca;
+	background: var(--pink);
+}
+.pill.flat {
+	border-color: var(--line);
+	color: var(--muted);
+	font-weight: 700;
 }
 
 .stack > * + * {

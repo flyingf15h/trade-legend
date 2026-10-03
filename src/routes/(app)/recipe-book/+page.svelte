@@ -6,7 +6,7 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	let tab = $state<'vouchers' | 'history'>('vouchers');
+	let tab = $derived(page.url.searchParams.get('tab') === 'history' ? 'history' : 'vouchers');
 	let open = $state<string | null>(page.url.searchParams.get('new'));
 	const fresh = page.url.searchParams.get('new');
 
@@ -27,18 +27,16 @@
 	};
 </script>
 
-<svelte:head><title>My Recipe Book · Crumb Club</title></svelte:head>
+<svelte:head><title>{tab === 'history' ? 'Crumb History' : 'My Rewards'} · Crumb Club</title></svelte:head>
 
-<h1>My Recipe Book</h1>
-<p class="muted">Your treats and every Crumb along the way.</p>
 
 {#if fresh}
-	<p class="note fresh">One treat, on Grandma. You&rsquo;ve earned it!</p>
+	<p class="note fresh center">One treat, on Grandma. You&rsquo;ve earned it!</p>
 {/if}
 
 <div class="tabs" role="tablist">
-	<button role="tab" aria-selected={tab === 'vouchers'} onclick={() => (tab = 'vouchers')}>Treats ({data.ready.length})</button>
-	<button role="tab" aria-selected={tab === 'history'} onclick={() => (tab = 'history')}>Crumb history</button>
+	<a role="tab" href="?" aria-selected={tab === 'vouchers'} data-sveltekit-replacestate data-sveltekit-noscroll>Rewards ({data.ready.length})</a>
+	<a role="tab" href="?tab=history" aria-selected={tab === 'history'} data-sveltekit-replacestate data-sveltekit-noscroll>Crumb History</a>
 </div>
 
 {#if tab === 'vouchers'}
@@ -116,19 +114,18 @@
 		padding: 4px;
 		margin: 6px 0 16px;
 	}
-	.tabs button {
+	.tabs a {
 		flex: 1;
-		border: 0;
-		background: none;
-		font: 600 0.95rem var(--display);
+		text-align: center;
+		text-decoration: none;
+		font: 800 0.95rem var(--body);
 		color: var(--muted);
-		padding: 8px;
+		padding: 9px;
 		border-radius: 999px;
-		cursor: pointer;
 	}
-	.tabs button[aria-selected='true'] {
-		background: var(--maroon);
-		color: var(--paper);
+	.tabs a[aria-selected='true'] {
+		background: var(--butter);
+		color: #5b4618;
 	}
 	.empty {
 		text-align: center;
@@ -153,7 +150,7 @@
 		width: 18px;
 		height: 18px;
 		border-radius: 50%;
-		background: var(--cream);
+		background: var(--bg);
 		border: 2px dashed var(--maroon);
 	}
 	.voucher::before {

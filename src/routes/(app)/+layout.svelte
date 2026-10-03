@@ -5,29 +5,56 @@
 
 	let { data, children }: LayoutProps = $props();
 
-	const tabs = [
-		{ href: '/kitchen', label: 'Kitchen', icon: 'M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z' },
-		{ href: '/recipe-book', label: 'Recipe Book', icon: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11M9 8h6' },
-		{ href: '/tasting', label: 'Tasting', icon: 'M8 3c3 0 4 3 4 5s-1.5 4-4 4-4-2-4-4 1-5 4-5zM8 12v9M15 3v18M15 3c2 0 4 2 4 5s-2 4-4 4' },
-		{ href: '/cupboard', label: 'Cupboard', icon: 'M12 3a8 8 0 0 1 8 8H4a8 8 0 0 1 8-8zM4 11h16a8 8 0 0 1-16 0z' },
-		{ href: '/invite', label: 'Invite', icon: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z' }
+	type Tab = 'home' | 'treats' | 'lucky' | 'vote' | 'me';
+	// title in the header, which tab is lit, and whether there's a back arrow to Me
+	const PAGES: Record<string, { title: string; tab: Tab; back?: boolean }> = {
+		'/kitchen': { title: '', tab: 'home' },
+		'/treats': { title: 'Treat Shelf', tab: 'treats' },
+		'/cupboard': { title: 'Lucky', tab: 'lucky' },
+		'/tasting': { title: 'Vote', tab: 'vote' },
+		'/me': { title: 'Me', tab: 'me' },
+		'/recipe-book': { title: 'My Rewards', tab: 'me', back: true },
+		'/invite': { title: 'Refer a Friend', tab: 'me', back: true },
+		'/card': { title: 'My QR Code', tab: 'me', back: true },
+		'/me/settings': { title: 'Birthday & details', tab: 'me', back: true },
+		'/welcome': { title: 'Welcome', tab: 'home' }
+	};
+	let here = $derived(PAGES[page.url.pathname] ?? { title: '', tab: 'home' as Tab });
+	let title = $derived(
+		page.url.pathname === '/recipe-book' && page.url.searchParams.get('tab') === 'history' ? 'Crumb History' : here.title
+	);
+
+	const tabs: { key: Tab; href: string; label: string; icon: string }[] = [
+		{ key: 'home', href: '/kitchen', label: 'Home', icon: 'M4 11.5 12 4l8 7.5M6 10v9.5h4.5V15h3v4.5H18V10' },
+		{ key: 'treats', href: '/treats', label: 'Treats', icon: 'M4 9h16v4H4zM5.5 13h13v7h-13zM12 9v11M12 9c-2-4-6-4-6-1.5S10 9 12 9c2 0 6 0 6-1.5S14 5 12 9' },
+		{ key: 'lucky', href: '/cupboard', label: 'Lucky', icon: 'M10 4c.6 3.4 2.6 5.4 6 6-3.4.6-5.4 2.6-6 6-.6-3.4-2.6-5.4-6-6 3.4-.6 5.4-2.6 6-6zM18 3c.3 1.4 1 2.1 2.4 2.4-1.4.3-2.1 1-2.4 2.4-.3-1.4-1-2.1-2.4-2.4 1.4-.3 2.1-1 2.4-2.4zM18 15c.3 1.4 1 2.1 2.4 2.4-1.4.3-2.1 1-2.4 2.4-.3-1.4-1-2.1-2.4-2.4 1.4-.3 2.1-1 2.4-2.4z' },
+		{ key: 'vote', href: '/tasting', label: 'Vote', icon: 'M5 13h12a6 6 0 0 1-12 0zM17 13l2-9M8 10c0-1 1-1.5 1-2.5S8 6 8 5M12 10c0-1 1-1.5 1-2.5S12 6 12 5' },
+		{ key: 'me', href: '/me', label: 'Me', icon: 'M3.5 15c0-4.5 3.8-8 8.5-8s8.5 3.5 8.5 8l-2.5 2H6zM9 8.2 8 16.5M15 8.2l1 8.3M12 7v9.5' }
 	];
-	const active = (href: string) => page.url.pathname === href || page.url.pathname.startsWith(href + '/');
 </script>
 
 <header class="top">
 	<div class="inner">
-		<a href="/me" class="me" aria-label="Your profile">
-			<img src={ART.avatar[data.member.icon]} alt="" />
-		</a>
-		<div class="brand">
-			<span class="title">The Crumb Club</span>
-			<span class="sub">at Grandma&rsquo;s Bakery</span>
+		{#if here.back}
+			<a href="/me" class="back" aria-label="Back to Me">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+			</a>
+		{:else}
+			<span class="logo"><img src={ART.food.cookie} alt="" /></span>
+		{/if}
+		<div class="where">
+			<span class="club">CRUMB CLUB</span>
+			{#if title}<span class="title">{title}</span>{/if}
 		</div>
-		<a href="/recipe-book" class="crumbs" aria-label="{data.balance} Crumbs">
+		<a href="/recipe-book?tab=history" class="crumbs" aria-label="{data.balance} Crumbs, see history">
 			<img src={ART.food.cookie} alt="" />
 			<b>{data.balance}</b>
 		</a>
+		{#if here.tab !== 'home' && here.tab !== 'me'}
+			<a href="/me" class="me" aria-label="Me">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.5" /><path d="M5 19c1-3.5 3.8-5 7-5s6 1.5 7 5" /></svg>
+			</a>
+		{/if}
 	</div>
 </header>
 
@@ -36,12 +63,14 @@
 </main>
 
 <nav class="tabs" aria-label="Crumb Club">
-	{#each tabs as t (t.href)}
-		<a href={t.href} class:on={active(t.href)} aria-current={active(t.href) ? 'page' : undefined}>
-			<svg viewBox="0 0 24 24" aria-hidden="true"><path d={t.icon} /></svg>
-			<span>{t.label}</span>
-		</a>
-	{/each}
+	<div class="bar">
+		{#each tabs as t (t.key)}
+			<a href={t.href} class:on={here.tab === t.key} aria-current={here.tab === t.key ? 'page' : undefined}>
+				<span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={t.icon} /></svg></span>
+				<span>{t.label}</span>
+			</a>
+		{/each}
+	</div>
 </nav>
 
 <style>
@@ -49,68 +78,102 @@
 		position: sticky;
 		top: 0;
 		z-index: 10;
-		background: var(--maroon);
-		color: var(--paper);
-		padding: 10px 16px 8px;
-		margin-bottom: 22px;
-	}
-	.top::after {
-		content: '';
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: -14px;
-		height: 14px;
-		background: radial-gradient(circle at 16px 0, var(--maroon) 15px, transparent 16px) 0 0 / 32px 14px repeat-x;
+		background: rgba(252, 248, 241, 0.94);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
 	}
 	.inner {
-		max-width: 560px;
+		max-width: var(--col);
 		margin: 0 auto;
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 10px;
 	}
-	.me img {
+	.logo {
 		width: 40px;
 		height: 40px;
-		display: block;
 		border-radius: 50%;
-		border: 2px solid var(--paper);
+		background: var(--cream);
+		border: 2px solid var(--ink);
+		display: grid;
+		place-items: center;
+		flex: none;
 	}
-	.brand {
+	.logo img {
+		width: 28px;
+	}
+	.back {
+		width: 40px;
+		height: 40px;
+		display: grid;
+		place-items: center;
+		border-radius: 50%;
+		color: var(--ink);
+		flex: none;
+	}
+	.back svg,
+	.me svg {
+		width: 24px;
+		height: 24px;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2.2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.where {
 		flex: 1;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		line-height: 1.05;
+		line-height: 1.1;
+	}
+	.club {
+		font: 800 0.8rem var(--body);
+		letter-spacing: 0.08em;
+		color: var(--maroon);
+	}
+	.where .club:only-child {
+		font-size: 1.05rem;
+		color: var(--ink);
 	}
 	.title {
-		font: 600 1.15rem var(--display);
-	}
-	.sub {
-		font-family: var(--hand);
-		font-size: 1.05rem;
-		opacity: 0.85;
+		font: 800 1.2rem var(--body);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.crumbs {
 		display: flex;
 		align-items: center;
-		gap: 6px;
-		background: var(--paper);
-		color: var(--maroon);
+		gap: 5px;
+		background: var(--butter);
+		border: 2px solid var(--butter-dk);
+		color: #6b5521;
 		text-decoration: none;
 		border-radius: 999px;
-		padding: 4px 12px 4px 5px;
-		font-family: var(--display);
-		font-size: 1.05rem;
+		padding: 6px 14px 6px 10px;
+		font: 800 1rem var(--body);
 	}
 	.crumbs img {
-		width: 26px;
-		height: 26px;
+		width: 20px;
+		height: 20px;
+	}
+	.me {
+		width: 42px;
+		height: 42px;
+		border-radius: 50%;
+		background: var(--maroon);
+		color: #fff;
+		display: grid;
+		place-items: center;
+		flex: none;
 	}
 	main {
-		max-width: 560px;
+		max-width: var(--col);
 		margin: 0 auto;
-		padding: 6px 16px calc(var(--nav-h) + 32px);
+		padding: 8px 18px calc(var(--nav-h) + 40px + env(safe-area-inset-bottom));
 	}
 	.tabs {
 		position: fixed;
@@ -118,27 +181,41 @@
 		right: 0;
 		bottom: 0;
 		z-index: 10;
-		display: flex;
-		justify-content: center;
-		background: var(--paper);
-		border-top: 2px solid var(--line);
-		padding-bottom: env(safe-area-inset-bottom);
+		padding: 0 14px calc(10px + env(safe-area-inset-bottom));
+		pointer-events: none;
 	}
-	.tabs a {
-		flex: 1;
-		max-width: 112px;
+	.bar {
+		pointer-events: auto;
+		max-width: calc(var(--col) - 8px);
+		margin: 0 auto;
 		height: var(--nav-h);
+		display: flex;
+		align-items: center;
+		justify-content: space-around;
+		background: var(--paper);
+		border: 1.5px solid var(--line);
+		border-radius: 999px;
+		box-shadow: var(--soft-shadow);
+		padding: 0 8px;
+	}
+	.bar a {
+		flex: 1;
+		max-width: 76px;
+		height: 62px;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: 3px;
-		color: var(--muted);
+		gap: 1px;
+		color: var(--ink);
 		text-decoration: none;
-		font-size: 0.72rem;
+		font-size: 0.78rem;
 		font-weight: 600;
+		border-radius: 999px;
+		transition: background 0.15s;
 	}
-	.tabs svg {
+	.ico svg {
+		display: block;
 		width: 26px;
 		height: 26px;
 		fill: none;
@@ -147,10 +224,9 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
-	.tabs a.on {
-		color: var(--maroon);
-	}
-	.tabs a.on svg {
-		fill: rgba(242, 201, 76, 0.55);
+	.bar a.on {
+		background: var(--butter);
+		color: #5b4618;
+		font-weight: 800;
 	}
 </style>

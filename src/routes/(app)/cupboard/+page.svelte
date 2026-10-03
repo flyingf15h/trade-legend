@@ -132,8 +132,9 @@
 <style>
 	.title {
 		text-align: center;
-		font-size: 1.45rem;
-		margin-bottom: 0;
+		font-size: 2.1rem;
+		color: var(--maroon);
+		margin: 4px 0 2px;
 	}
 	.lead {
 		text-align: center;
@@ -142,7 +143,6 @@
 		margin-bottom: 0;
 	}
 	.lead .pill {
-		font-family: var(--serif);
 		vertical-align: 3px;
 	}
 	.center {

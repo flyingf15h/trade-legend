@@ -47,7 +47,7 @@
 
 <style>
 	main {
-		max-width: 520px;
+		max-width: var(--col);
 		margin: 0 auto;
 		padding: 8px 16px 48px;
 		text-align: center;

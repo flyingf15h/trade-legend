@@ -29,8 +29,7 @@
 
 <svelte:head><title>Invite a Neighbour · Crumb Club</title></svelte:head>
 
-<h1>Invite a Neighbour</h1>
-<p class="lead">There&rsquo;s always room for one more at Grandma&rsquo;s table.</p>
+<p class="lead center">There&rsquo;s always room for one more at Grandma&rsquo;s table.</p>
 
 <section class="card invite">
 	<div class="gifts">
@@ -56,7 +55,7 @@
 	{/if}
 	{#each data.referrals as r (r.id)}
 		{@const at = STEPS.indexOf(r.status)}
-		<div class="ref recipe-card">
+		<div class="ref panel">
 			<div class="spread">
 				<b>{r.name ?? 'Someone opened your invite'}</b>
 				<small class="muted">{shortDate(r.createdAt)}</small>
@@ -74,7 +73,8 @@
 <style>
 	.lead {
 		font-family: var(--hand);
-		font-size: 1.4rem;
+		font-size: 1.5rem;
+		margin: 8px 0 16px;
 	}
 	.invite {
 		text-align: center;

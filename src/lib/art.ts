@@ -25,6 +25,8 @@ export const ART = {
 	} as Record<string, string>,
 	crumbBox: a('crumb-box.svg'),
 	sparkle: a('sparkle.svg'),
+	twinkle: a('twinkle.svg'),
+	cookieFace: a('cookie-face.svg'),
 	spoon: a('spoon.svg'),
 	avatar: {
 		croissant: a('avatar-croissant.svg'),

@@ -310,7 +310,7 @@
 		position: relative;
 		isolation: isolate;
 		/* leave room for the header, the buttons and the tab bar so nothing scrolls mid-play */
-		width: min(100%, 380px, calc((100svh - 400px) * 360 / 548));
+		width: min(100%, 380px, calc((100svh - 470px) * 360 / 548));
 		min-width: 230px;
 		margin: 0 auto;
 		padding-top: 10px;
